@@ -9,6 +9,20 @@ import { signInWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail } f
 import { Loader2, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { API_BASE } from "../lib/apiClient";
 
+function normalizeAuthError(err) {
+    const code = String(err?.code || "").toLowerCase();
+    const message = String(err?.message || "");
+
+    if (
+        code === "auth/unauthorized-domain" ||
+        message.includes("Illegal url for new iframe")
+    ) {
+        return "Google Sign-In is not authorized for this domain yet. Add your Vercel domain under Firebase Authentication → Settings → Authorized domains.";
+    }
+
+    return message || "Authentication failed";
+}
+
 export default function SignInPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState("");
@@ -103,7 +117,7 @@ export default function SignInPage() {
             router.push("/");
         } catch (err) {
             console.error("Google sign in error", err);
-            setError(err.message || "Failed to sign in with Google");
+            setError(normalizeAuthError(err));
         } finally {
             setLoading(false);
         }

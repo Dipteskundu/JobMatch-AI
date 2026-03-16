@@ -8,6 +8,20 @@ import { auth, googleProvider } from "../lib/firebaseClient";
 import { createUserWithEmailAndPassword, signInWithPopup, updateProfile } from "firebase/auth";
 import { API_BASE } from "../lib/apiClient";
 
+function normalizeAuthError(err) {
+    const code = String(err?.code || "").toLowerCase();
+    const message = String(err?.message || "");
+
+    if (
+        code === "auth/unauthorized-domain" ||
+        message.includes("Illegal url for new iframe")
+    ) {
+        return "Google Sign-In is not authorized for this domain yet. Add your Vercel domain under Firebase Authentication → Settings → Authorized domains.";
+    }
+
+    return message || "Authentication failed";
+}
+
 export default function SignUpPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [role, setRole] = useState("candidate"); // candidate or recruiter
@@ -78,7 +92,7 @@ export default function SignUpPage() {
             router.push("/");
         } catch (err) {
             console.error("Google sign up error", err);
-            setError(err.message || "Failed to sign up with Google");
+            setError(normalizeAuthError(err));
         } finally {
             setLoading(false);
         }

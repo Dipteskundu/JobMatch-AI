@@ -4,11 +4,26 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  X, Search, Bell, ChevronDown, User, Bookmark,
-  FileText, Settings, LogOut, LayoutDashboard, Lightbulb,
-  Home, Briefcase, Building2, Info, ChevronRight, Zap,
+  X,
+  Search,
+  Bell,
+  ChevronDown,
+  User,
+  Bookmark,
+  FileText,
+  Settings,
+  LogOut,
+  LayoutDashboard,
+  Lightbulb,
+  Home,
+  Briefcase,
+  Building2,
+  Info,
+  ChevronRight,
+  Zap,
 } from "lucide-react";
 import { useAuth } from "../../lib/AuthContext";
+import { useTheme } from "../../lib/ThemeContext";
 import Avatar from "../common/Avatar";
 import NotificationPanel from "../Notifications/NotificationPanel";
 import { API_BASE } from "../../lib/apiClient";
@@ -24,11 +39,14 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
+  const { theme, toggleTheme, mounted } = useTheme();
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [mobileOpen]);
 
   useEffect(() => {
@@ -53,10 +71,13 @@ export default function Navbar() {
     if (!isAuthenticated || !user?.uid) return;
     const fetchUnreadCount = async () => {
       try {
-        const res = await fetch(new URL(`/api/notifications/${user.uid}`, apiBase).toString());
+        const res = await fetch(
+          new URL(`/api/notifications/${user.uid}`, apiBase).toString(),
+        );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        if (json.success && json.data) setUnreadCount(json.data.unreadCount || 0);
+        if (json.success && json.data)
+          setUnreadCount(json.data.unreadCount || 0);
       } catch (err) {
         console.error("Error fetching notifications:", err);
       }
@@ -74,15 +95,52 @@ export default function Navbar() {
   ];
 
   const userMenuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", color: "text-indigo-600", bg: "bg-indigo-50" },
-    { icon: User, label: "My Profile", href: "/profile", color: "text-violet-600", bg: "bg-violet-50" },
-    { icon: Settings, label: "Edit Profile", href: "/profile/edit", color: "text-slate-600", bg: "bg-slate-100" },
-    { icon: Bookmark, label: "Saved Jobs", href: "/saved-jobs", color: "text-amber-600", bg: "bg-amber-50" },
-    { icon: FileText, label: "My Applications", href: "/applications", color: "text-emerald-600", bg: "bg-emerald-50" },
-    { icon: Lightbulb, label: "Skill Gap Detection", href: "/skill-gap-detection", color: "text-orange-600", bg: "bg-orange-50" },
+    {
+      icon: LayoutDashboard,
+      label: "Dashboard",
+      href: "/dashboard",
+      color: "text-indigo-600",
+      bg: "bg-indigo-50",
+    },
+    {
+      icon: User,
+      label: "My Profile",
+      href: "/profile",
+      color: "text-violet-600",
+      bg: "bg-violet-50",
+    },
+    {
+      icon: Settings,
+      label: "Edit Profile",
+      href: "/profile/edit",
+      color: "text-slate-600",
+      bg: "bg-slate-100",
+    },
+    {
+      icon: Bookmark,
+      label: "Saved Jobs",
+      href: "/saved-jobs",
+      color: "text-amber-600",
+      bg: "bg-amber-50",
+    },
+    {
+      icon: FileText,
+      label: "My Applications",
+      href: "/applications",
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
+    },
+    {
+      icon: Lightbulb,
+      label: "Skill Gap Detection",
+      href: "/skill-gap-detection",
+      color: "text-orange-600",
+      bg: "bg-orange-50",
+    },
   ];
 
-  const userDisplayName = user?.displayName || user?.email?.split("@")[0] || "User";
+  const userDisplayName =
+    user?.displayName || user?.email?.split("@")[0] || "User";
 
   const closeMobile = (href) => {
     setMobileOpen(false);
@@ -100,7 +158,6 @@ export default function Navbar() {
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
               <span className="text-[17px] font-black text-slate-900 tracking-tight">
@@ -117,7 +174,9 @@ export default function Navbar() {
                     key={link.name}
                     href={link.href}
                     className={`px-3 py-2 rounded-lg text-[14px] font-semibold transition-colors ${
-                      isActive ? "text-indigo-600" : "text-slate-600 hover:text-slate-900"
+                      isActive
+                        ? "text-indigo-600"
+                        : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
                     {link.name}
@@ -128,7 +187,6 @@ export default function Navbar() {
 
             {/* Right Side */}
             <div className="flex items-center gap-3 ml-auto">
-
               {/* Logged Out */}
               {!isAuthenticated && (
                 <>
@@ -140,10 +198,16 @@ export default function Navbar() {
                       className="bg-transparent text-[13px] text-slate-700 placeholder-slate-400 outline-none w-full"
                     />
                   </div>
-                  <Link href="/signin" className="hidden md:inline-flex text-[14px] font-semibold text-slate-700 hover:text-indigo-600 transition-colors px-2">
+                  <Link
+                    href="/signin"
+                    className="hidden md:inline-flex text-[14px] font-semibold text-slate-700 hover:text-indigo-600 transition-colors px-2"
+                  >
                     Log In
                   </Link>
-                  <Link href="/signup" className="hidden md:inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white text-[14px] font-semibold px-5 py-2 rounded-lg transition-colors shadow-sm active:scale-95">
+                  <Link
+                    href="/signup"
+                    className="hidden md:inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white text-[14px] font-semibold px-5 py-2 rounded-lg transition-colors shadow-sm active:scale-95"
+                  >
                     Sign Up
                   </Link>
                 </>
@@ -181,21 +245,40 @@ export default function Navbar() {
                       className="flex items-center gap-2.5 pl-2 pr-1 py-1.5 rounded-xl hover:bg-slate-100 transition-colors group"
                     >
                       <div className="text-right">
-                        <p className="text-[13px] font-bold text-slate-900 leading-tight line-clamp-1 max-w-[110px]">{userDisplayName}</p>
-                        <p className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wide leading-tight">PRO MEMBER</p>
+                        <p className="text-[13px] font-bold text-slate-900 leading-tight line-clamp-1 max-w-[110px]">
+                          {userDisplayName}
+                        </p>
+                        <p className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wide leading-tight">
+                          PRO MEMBER
+                        </p>
                       </div>
-                      <Avatar src={user?.photoURL} alt={userDisplayName} size="w-9 h-9" ring={profileOpen} />
-                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${profileOpen ? "rotate-180" : ""}`} />
+                      <Avatar
+                        src={user?.photoURL}
+                        alt={userDisplayName}
+                        size="w-9 h-9"
+                        ring={profileOpen}
+                      />
+                      <ChevronDown
+                        className={`w-4 h-4 text-slate-400 transition-transform ${profileOpen ? "rotate-180" : ""}`}
+                      />
                     </button>
 
                     {profileOpen && (
                       <div className="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-fade-in">
                         <div className="px-4 py-3 border-b border-slate-100">
                           <div className="flex items-center gap-3">
-                            <Avatar src={user?.photoURL} alt={userDisplayName} size="w-10 h-10" />
+                            <Avatar
+                              src={user?.photoURL}
+                              alt={userDisplayName}
+                              size="w-10 h-10"
+                            />
                             <div className="min-w-0">
-                              <p className="text-sm font-bold text-slate-900 truncate">{userDisplayName}</p>
-                              <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+                              <p className="text-sm font-bold text-slate-900 truncate">
+                                {userDisplayName}
+                              </p>
+                              <p className="text-xs text-slate-400 truncate">
+                                {user?.email}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -203,7 +286,10 @@ export default function Navbar() {
                           <button
                             key={label}
                             type="button"
-                            onClick={() => { setProfileOpen(false); router.push(href); }}
+                            onClick={() => {
+                              setProfileOpen(false);
+                              router.push(href);
+                            }}
                             className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                           >
                             <Icon className="w-4 h-4 text-slate-400" />
@@ -213,7 +299,11 @@ export default function Navbar() {
                         <div className="border-t border-slate-100 mt-1 pt-1">
                           <button
                             type="button"
-                            onClick={async () => { setProfileOpen(false); await logout(); router.push("/"); }}
+                            onClick={async () => {
+                              setProfileOpen(false);
+                              await logout();
+                              router.push("/");
+                            }}
                             className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
                           >
                             <LogOut className="w-4 h-4" />
@@ -243,6 +333,20 @@ export default function Navbar() {
                   </span>
                 )}
               </button>
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                aria-label="Toggle theme"
+                className="hidden md:flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              >
+                {mounted ? (
+                  theme === "dark" ? (
+                    <span className="text-[16px]">🌙</span>
+                  ) : (
+                    <span className="text-[16px]">☀️</span>
+                  )
+                ) : null}
+              </button>
             </div>
           </div>
         </div>
@@ -259,7 +363,10 @@ export default function Navbar() {
                   placeholder="Search jobs, companies, or skills..."
                   className="bg-transparent text-[14px] text-slate-700 placeholder-slate-400 outline-none w-full"
                 />
-                <button onClick={() => setSearchOpen(false)} className="text-slate-400 hover:text-slate-700">
+                <button
+                  onClick={() => setSearchOpen(false)}
+                  className="text-slate-400 hover:text-slate-700"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -288,7 +395,11 @@ export default function Navbar() {
       >
         {/* Drawer Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-          <Link href="/" onClick={() => setMobileOpen(false)} className="text-[17px] font-black text-slate-900 tracking-tight">
+          <Link
+            href="/"
+            onClick={() => setMobileOpen(false)}
+            className="text-[17px] font-black text-slate-900 tracking-tight"
+          >
             <span className="text-indigo-600"></span>
           </Link>
           <button
@@ -302,15 +413,23 @@ export default function Navbar() {
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
-
           {/* User Profile Card (logged in) */}
           {isAuthenticated && (
             <div className="mx-4 mt-4 p-4 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl text-white">
               <div className="flex items-center gap-3 mb-3">
-                <Avatar src={user?.photoURL} alt={userDisplayName} size="w-12 h-12" ring={true} />
+                <Avatar
+                  src={user?.photoURL}
+                  alt={userDisplayName}
+                  size="w-12 h-12"
+                  ring={true}
+                />
                 <div className="min-w-0">
-                  <p className="font-black text-[15px] leading-tight truncate">{userDisplayName}</p>
-                  <p className="text-indigo-200 text-xs font-semibold uppercase tracking-wider">Pro Member</p>
+                  <p className="font-black text-[15px] leading-tight truncate">
+                    {userDisplayName}
+                  </p>
+                  <p className="text-indigo-200 text-xs font-semibold uppercase tracking-wider">
+                    Pro Member
+                  </p>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -327,7 +446,10 @@ export default function Navbar() {
                   <User className="w-3.5 h-3.5" /> Profile
                 </button>
                 <button
-                  onClick={() => { setNotifOpen(true); setMobileOpen(false); }}
+                  onClick={() => {
+                    setNotifOpen(true);
+                    setMobileOpen(false);
+                  }}
                   className="relative flex items-center justify-center w-9 py-2 bg-white/20 hover:bg-white/30 rounded-xl transition-colors"
                   aria-label="Notifications"
                 >
@@ -354,7 +476,9 @@ export default function Navbar() {
 
           {/* Navigation Links */}
           <div className="px-4 mt-5">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Navigation</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+              Navigation
+            </p>
             <nav className="flex flex-col gap-1">
               {navLinks.map(({ name, href, icon: Icon }) => {
                 const isActive = pathname === href;
@@ -369,11 +493,17 @@ export default function Navbar() {
                         : "text-slate-700 hover:bg-slate-50"
                     }`}
                   >
-                    <span className={`w-8 h-8 flex items-center justify-center rounded-lg ${isActive ? "bg-indigo-100" : "bg-slate-100"}`}>
-                      <Icon className={`w-4 h-4 ${isActive ? "text-indigo-600" : "text-slate-500"}`} />
+                    <span
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg ${isActive ? "bg-indigo-100" : "bg-slate-100"}`}
+                    >
+                      <Icon
+                        className={`w-4 h-4 ${isActive ? "text-indigo-600" : "text-slate-500"}`}
+                      />
                     </span>
                     {name}
-                    {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />}
+                    {isActive && (
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />
+                    )}
                   </Link>
                 );
               })}
@@ -383,7 +513,9 @@ export default function Navbar() {
           {/* Account Links (logged in) */}
           {isAuthenticated && (
             <div className="px-4 mt-5">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Account</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                Account
+              </p>
               <div className="flex flex-col gap-1">
                 {userMenuItems.map(({ icon: Icon, label, href, color, bg }) => (
                   <button
@@ -392,7 +524,9 @@ export default function Navbar() {
                     onClick={() => closeMobile(href)}
                     className="flex items-center gap-3 px-3 py-3 rounded-xl text-[14px] font-semibold text-slate-700 hover:bg-slate-50 transition-all w-full text-left"
                   >
-                    <span className={`w-8 h-8 flex items-center justify-center rounded-lg ${bg}`}>
+                    <span
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg ${bg}`}
+                    >
                       <Icon className={`w-4 h-4 ${color}`} />
                     </span>
                     {label}
@@ -414,8 +548,12 @@ export default function Navbar() {
                   <Zap className="w-5 h-5 text-white" />
                 </span>
                 <div className="text-left">
-                  <p className="text-sm font-black text-amber-900">Take Skill Test</p>
-                  <p className="text-xs text-amber-700 font-medium">Verify your skills & stand out</p>
+                  <p className="text-sm font-black text-amber-900">
+                    Take Skill Test
+                  </p>
+                  <p className="text-xs text-amber-700 font-medium">
+                    Verify your skills & stand out
+                  </p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-amber-500 ml-auto shrink-0" />
               </button>
@@ -451,7 +589,11 @@ export default function Navbar() {
           <div className="px-4 py-4 border-t border-slate-100">
             <button
               type="button"
-              onClick={async () => { setMobileOpen(false); await logout(); router.push("/"); }}
+              onClick={async () => {
+                setMobileOpen(false);
+                await logout();
+                router.push("/");
+              }}
               className="w-full flex items-center justify-center gap-2.5 py-3 text-[14px] font-bold text-red-500 bg-red-50 hover:bg-red-100 rounded-2xl transition-colors"
             >
               <LogOut className="w-4 h-4" />
