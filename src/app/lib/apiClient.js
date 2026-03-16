@@ -7,6 +7,10 @@
  *
  * Locally it falls back to localhost:5000.
  */
+const cleanEnv = (value) =>
+  typeof value === "string" ? value.trim() : value;
+
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://hireing-platform-ai-server.onrender.com";
+  cleanEnv(process.env.NEXT_PUBLIC_API_BASE_URL) ||
+  cleanEnv(process.env.NEXT_PUBLIC_API_LOCAL) ||
+  "http://localhost:5000";
