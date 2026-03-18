@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Skeleton from "../../components/common/Skeleton";
 import { API_BASE } from "../../lib/apiClient";
+import apiClient from "../../lib/apiClient";
 
 function StatCard({ label, value, icon: Icon, color, bg }) {
   return (
@@ -265,14 +266,9 @@ export default function AdminDashboard({
 
   const chartMaxUsers = Math.max(1, ...chartBars.map((d) => d.users));
 
-  const handleBanUser = async (userId) => {
+    const handleBanUser = async (userId) => {
     try {
-      const res = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "banned" }),
-      });
-      if (!res.ok) throw new Error("Failed to ban user");
+      await apiClient.patch(`/api/admin/users/${userId}`, { status: "banned" });
       setUsers((prev) =>
         prev.map((u) =>
           u.id === userId ? { ...u, status: "banned", flagged: true } : u,
@@ -286,12 +282,7 @@ export default function AdminDashboard({
 
   const handleUnbanUser = async (userId) => {
     try {
-      const res = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "active" }),
-      });
-      if (!res.ok) throw new Error("Failed to unban user");
+      await apiClient.patch(`/api/admin/users/${userId}`, { status: "active" });
       setUsers((prev) =>
         prev.map((u) =>
           u.id === userId ? { ...u, status: "active", flagged: false } : u,
@@ -305,11 +296,7 @@ export default function AdminDashboard({
 
   const handleRemovePost = async (postId) => {
     try {
-      const res = await fetch(
-        `${API_BASE}/api/admin/suspicious-posts/${postId}`,
-        { method: "DELETE" },
-      );
-      if (!res.ok) throw new Error("Failed to remove post");
+      await apiClient.delete(`/api/admin/suspicious-posts/${postId}`);
       setSuspiciousPosts((prev) => prev.filter((p) => p.id !== postId));
       showToast("Post removed.");
     } catch (err) {
@@ -319,15 +306,7 @@ export default function AdminDashboard({
 
   const handleReviewPost = async (postId) => {
     try {
-      const res = await fetch(
-        `${API_BASE}/api/admin/suspicious-posts/${postId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "reviewed" }),
-        },
-      );
-      if (!res.ok) throw new Error("Failed to review post");
+      await apiClient.patch(`/api/admin/suspicious-posts/${postId}`, { status: "reviewed" });
       setSuspiciousPosts((prev) =>
         prev.map((p) => (p.id === postId ? { ...p, status: "reviewed" } : p)),
       );
@@ -339,15 +318,7 @@ export default function AdminDashboard({
 
   const handleReviewJobRequest = async (requestId, status) => {
     try {
-      const res = await fetch(
-        `${API_BASE}/api/admin/job-requests/${requestId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status }),
-        },
-      );
-      if (!res.ok) throw new Error(`Failed to ${status} job request`);
+      await apiClient.patch(`/api/admin/job-requests/${requestId}`, { status });
       setJobRequests((prev) =>
         prev.map((r) => (r.id === requestId ? { ...r, status } : r)),
       );

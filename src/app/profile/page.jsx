@@ -26,6 +26,7 @@ import { useAuth } from "../lib/AuthContext";
 import Avatar from "../components/common/Avatar";
 import PageWrapper from "../components/common/PageWrapper";
 import { API_BASE } from "../lib/apiClient";
+import apiClient from "../lib/apiClient";
 
 const Page = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -56,13 +57,14 @@ const Page = () => {
       return;
     }
     try {
-      const res = await fetch(`${apiBase}/api/auth/profile/${user.uid}`);
-      const json = await res.json();
+      const { data: json } = await apiClient.get(`/api/auth/profile/${user.uid}`);
       if (json.success) {
         setProfile(json.data);
       }
     } catch (err) {
-      console.error("Error fetching profile:", err);
+      if (err.message !== "User not found") {
+        console.error("Error fetching profile:", err);
+      }
     } finally {
       setLoading(false);
     }

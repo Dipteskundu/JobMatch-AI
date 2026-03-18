@@ -21,6 +21,7 @@ import {
 } from "firebase/auth";
 import { Loader2, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { API_BASE } from "../lib/apiClient";
+import apiClient from "../lib/apiClient";
 
 function normalizeAuthError(err) {
   const code = String(err?.code || "").toLowerCase();
@@ -52,25 +53,33 @@ export default function SignInPage() {
 
   const router = useRouter();
 
-  const apiBase = API_BASE;
-
   async function syncUserWithBackend(user) {
     try {
-      await fetch(`${apiBase}/api/auth/sync-user`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          provider: user.providerData?.[0]?.providerId,
-          photoURL: user.photoURL,
-        }),
+      // Fetch existing role first so we don't accidentally overwrite it
+      let existingRole;
+      try {
+        const { data: profileData } = await apiClient.get(
+          `/api/auth/profile/${user.uid}`
+        );
+        existingRole = profileData?.data?.role;
+      } catch (err) {
+        if (err.message !== "User not found") {
+           console.warn("Could not fetch existing profile:", err);
+        }
+      }
+
+      const { data: syncData } = await apiClient.post("/api/auth/sync-user", {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        provider: user.providerData?.[0]?.providerId,
+        photoURL: user.photoURL,
+        ...(existingRole ? { role: existingRole } : {}),
       });
+      return syncData;
     } catch (err) {
       console.error("Failed to sync user with backend", err);
+      return null;
     }
   }
 
@@ -92,14 +101,16 @@ export default function SignInPage() {
       if (isAdmin) {
         localStorage.setItem("localAdminSession", "true");
         window.dispatchEvent(new Event("local-admin-session-changed"));
-        router.replace("/dashboard");
+        router.push("/dashboard/admin");
         return;
       }
 
       const cred = await signInWithEmailAndPassword(auth, email, password);
-      await syncUserWithBackend(cred.user);
+      const syncResult = await syncUserWithBackend(cred.user);
+      const role = syncResult?.data?.role || "candidate";
+      
       sessionStorage.setItem("showWelcome", "1");
-      router.push("/");
+      router.push(`/dashboard/${role}`);
     } catch (err) {
       console.error("Email sign in error", err);
       setError(err.message || "Failed to sign in");
@@ -141,9 +152,11 @@ export default function SignInPage() {
 
     try {
       const cred = await signInWithPopup(auth, googleProvider);
-      await syncUserWithBackend(cred.user);
+      const syncResult = await syncUserWithBackend(cred.user);
+      const role = syncResult?.data?.role || "candidate";
+
       sessionStorage.setItem("showWelcome", "1");
-      router.push("/");
+      router.push(`/dashboard/${role}`);
     } catch (err) {
       console.error("Google sign in error", err);
       setError(normalizeAuthError(err));

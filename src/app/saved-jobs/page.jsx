@@ -8,7 +8,7 @@ import Skeleton from "../components/common/Skeleton";
 import { Briefcase, MapPin, DollarSign, Clock, Bookmark, Trash2, ChevronRight, Search } from "lucide-react";
 import Link from "next/link";
 import PageWrapper from "../components/common/PageWrapper";
-import { API_BASE } from "../lib/apiClient";
+import apiClient, { API_BASE } from "../lib/apiClient";
 
 export default function SavedJobsPage() {
   const { user, isAuthenticated } = useAuth();
@@ -22,8 +22,7 @@ export default function SavedJobsPage() {
     const fetchSavedJobs = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/api/jobs/saved/${user.uid}`);
-        const json = await res.json();
+        const { data: json } = await apiClient.get(`/api/jobs/saved/${user.uid}`);
         if (json.success) {
           setSavedJobs(json.data);
         } else {
@@ -44,10 +43,7 @@ export default function SavedJobsPage() {
     if (!confirm("Are you sure you want to remove this job from your saved list?")) return;
 
     try {
-      const res = await fetch(`${API_BASE}/api/jobs/saved/${savedId}`, {
-        method: "DELETE",
-      });
-      const json = await res.json();
+      const { data: json } = await apiClient.delete(`/api/jobs/saved/${savedId}`);
       if (json.success) {
         setSavedJobs(prev => prev.filter(job => job._id !== savedId));
       } else {

@@ -27,19 +27,25 @@ import { useTheme } from "../../lib/ThemeContext";
 import Avatar from "../common/Avatar";
 import NotificationPanel from "../Notifications/NotificationPanel";
 import { API_BASE } from "../../lib/apiClient";
+import apiClient from "../../lib/apiClient";
 
-export default function Navbar() {
+export default function Navbar({ isDashboard = false }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [clientMounted, setClientMounted] = useState(false);
   const profileRef = useRef(null);
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, role, logout } = useAuth();
   const { theme, toggleTheme, mounted } = useTheme();
+
+  useEffect(() => {
+    setClientMounted(true);
+  }, []);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -65,17 +71,11 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const apiBase = API_BASE;
-
   useEffect(() => {
     if (!isAuthenticated || !user?.uid) return;
     const fetchUnreadCount = async () => {
       try {
-        const res = await fetch(
-          new URL(`/api/notifications/${user.uid}`, apiBase).toString(),
-        );
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
+        const { data: json } = await apiClient.get(`/api/notifications/${user.uid}`);
         if (json.success && json.data)
           setUnreadCount(json.data.unreadCount || 0);
       } catch (err) {
@@ -85,7 +85,7 @@ export default function Navbar() {
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
-  }, [apiBase, isAuthenticated, user?.uid]);
+  }, [isAuthenticated, user?.uid]);
 
   const navLinks = [
     { name: "Home", href: "/", icon: Home },
@@ -94,50 +94,95 @@ export default function Navbar() {
     { name: "About Us", href: "/about", icon: Info },
   ];
 
-  const userMenuItems = [
-    {
-      icon: LayoutDashboard,
-      label: "Dashboard",
-      href: "/dashboard",
-      color: "text-indigo-600",
-      bg: "bg-indigo-50",
-    },
-    {
-      icon: User,
-      label: "My Profile",
-      href: "/profile",
-      color: "text-violet-600",
-      bg: "bg-violet-50",
-    },
-    {
-      icon: Settings,
-      label: "Edit Profile",
-      href: "/profile/edit",
-      color: "text-slate-600",
-      bg: "bg-slate-100",
-    },
-    {
-      icon: Bookmark,
-      label: "Saved Jobs",
-      href: "/saved-jobs",
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-    },
-    {
-      icon: FileText,
-      label: "My Applications",
-      href: "/applications",
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-    },
-    {
-      icon: Lightbulb,
-      label: "Skill Gap Detection",
-      href: "/skill-gap-detection",
-      color: "text-orange-600",
-      bg: "bg-orange-50",
-    },
-  ];
+  const getRoleBasedMenuItems = () => {
+    const commonItems = [
+      {
+        icon: LayoutDashboard,
+        label: "Dashboard",
+        href: `/dashboard/${role || 'candidate'}`,
+        color: "text-indigo-600",
+        bg: "bg-indigo-50",
+      },
+      {
+        icon: User,
+        label: "My Profile",
+        href: "/profile",
+        color: "text-violet-600",
+        bg: "bg-violet-50",
+      },
+    ];
+
+    if (role === "candidate") {
+      return [
+        ...commonItems,
+        {
+          icon: FileText,
+          label: "My Applications",
+          href: "/dashboard/candidate/applications",
+          color: "text-emerald-600",
+          bg: "bg-emerald-50",
+        },
+        {
+          icon: Bookmark,
+          label: "Saved Jobs",
+          href: "/saved-jobs",
+          color: "text-amber-600",
+          bg: "bg-amber-50",
+        },
+        {
+          icon: Lightbulb,
+          label: "Skill Gap Detection",
+          href: "/skill-gap-detection",
+          color: "text-orange-600",
+          bg: "bg-orange-50",
+        },
+      ];
+    }
+
+    if (role === "recruiter") {
+      return [
+        ...commonItems,
+        {
+          icon: Briefcase,
+          label: "My Jobs",
+          href: "/dashboard/recruiter/jobs",
+          color: "text-blue-600",
+          bg: "bg-blue-50",
+        },
+        {
+          icon: Users,
+          label: "Applicants",
+          href: "/dashboard/recruiter/applicants",
+          color: "text-emerald-600",
+          bg: "bg-emerald-50",
+        },
+      ];
+    }
+
+    if (role === "admin") {
+      return [
+        ...commonItems,
+        {
+          icon: Users,
+          label: "All Users",
+          href: "/dashboard/admin/users",
+          color: "text-slate-600",
+          bg: "bg-slate-100",
+        },
+        {
+          icon: Settings,
+          label: "Platform Settings",
+          href: "/dashboard/admin/settings",
+          color: "text-indigo-600",
+          bg: "bg-indigo-50",
+        },
+      ];
+    }
+
+    return commonItems;
+  };
+
+  const userMenuItems = getRoleBasedMenuItems();
 
   const userDisplayName =
     user?.displayName || user?.email?.split("@")[0] || "User";
@@ -150,10 +195,12 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+          isDashboard ? "md:left-64" : ""
+        } ${
           scrolled
-            ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] border-b border-slate-100"
-            : "bg-white border-b border-slate-100"
+            ? "bg-white/80 backdrop-blur-md shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
+            : "bg-white"
         }`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -187,8 +234,12 @@ export default function Navbar() {
 
             {/* Right Side */}
             <div className="flex items-center gap-3 ml-auto">
-              {/* Logged Out */}
-              {!isAuthenticated && (
+              {/* Auth-dependent UI — only render after client mount to avoid hydration mismatch */}
+              {!clientMounted ? (
+                /* Placeholder matching logged-out layout to keep stable width */
+                <div className="hidden md:flex items-center gap-2 w-52 h-9" />
+              ) : !isAuthenticated ? (
+                /* Logged Out */
                 <>
                   <div className="hidden md:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full px-4 py-2 hover:border-slate-300 focus-within:border-indigo-400 focus-within:bg-white transition-all w-52">
                     <Search className="w-4 h-4 text-slate-400 shrink-0" />
@@ -211,10 +262,8 @@ export default function Navbar() {
                     Sign Up
                   </Link>
                 </>
-              )}
-
-              {/* Logged In */}
-              {isAuthenticated && (
+              ) : (
+                /* Logged In */
                 <>
                   <button
                     onClick={() => setSearchOpen((v) => !v)}
@@ -249,9 +298,15 @@ export default function Navbar() {
                           {userDisplayName}
                         </p>
                         <p
-                          className={`text-[10px] font-semibold uppercase tracking-wide leading-tight ${user?.isLocalAdmin ? "text-amber-600" : "text-indigo-600"}`}
+                          className={`text-[10px] font-black uppercase tracking-widest leading-tight ${
+                            role === "admin" 
+                              ? "text-amber-600" 
+                              : role === "recruiter"
+                              ? "text-blue-600"
+                              : "text-indigo-600"
+                          }`}
                         >
-                          {user?.isLocalAdmin ? "ADMIN" : "PRO MEMBER"}
+                          {role || "CANDIDATE"}
                         </p>
                       </div>
                       <Avatar
@@ -556,7 +611,7 @@ export default function Navbar() {
           )}
 
           {/* Skill Test Promo (logged in) */}
-          {isAuthenticated && (
+          {isAuthenticated && role === "candidate" && (
             <div className="mx-4 mt-5">
               <button
                 onClick={() => closeMobile("/skill-test")}

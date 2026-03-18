@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/AuthContext";
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
-import { API_BASE } from "../../lib/apiClient";
+import apiClient, { API_BASE } from "../../lib/apiClient";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -51,20 +51,13 @@ export default function SkillGapAnalysisPage({ params }) {
   async function fetchAnalysis() {
     try {
       setLoading(true);
-      // We also want to fetch job info to show the title. We can just use the job details api if needed.
-      const jobRes = await fetch(`${apiBase}/api/jobs/${jobId}`);
-      if (jobRes.ok) {
-        const jobData = await jobRes.json();
-        setJobTitle(jobData.data?.title || "Job");
-        setCompany(jobData.data?.company || "");
+      const jobRes = await apiClient.get(`/api/jobs/${jobId}`);
+      if (jobRes.data) {
+        setJobTitle(jobRes.data.data?.title || "Job");
+        setCompany(jobRes.data.data?.company || "");
       }
 
-      const res = await fetch(`${apiBase}/api/skill-gap/${jobId}/${user.uid}`);
-      if (!res.ok) {
-        throw new Error("Analysis failed to load");
-      }
-      const data = await res.json();
-      
+      const { data } = await apiClient.get(`/api/skill-gap/${jobId}/${user.uid}`);
       if (data.success) {
         setMatchScore(data.data.matchScore || 0);
         setMatchedSkills(data.data.matchedSkills || []);
@@ -84,19 +77,14 @@ export default function SkillGapAnalysisPage({ params }) {
   const handleApplyAnyway = async () => {
     try {
       setApplying(true);
-      const res = await fetch(`${apiBase}/api/jobs/${jobId}/apply`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          uid: user.uid, 
-          email: user.email,
-          jobTitle: jobTitle,
-          company: company,
-          location: "" // we don't have location here but it's optional
-        }),
+      const { data } = await apiClient.post(`/api/jobs/${jobId}/apply`, {
+        uid: user.uid,
+        email: user.email,
+        jobTitle: jobTitle,
+        company: company,
+        location: "",
       });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      if (data.success) {
         router.push(
           `/communication/start?jobId=${jobId}&jobTitle=${encodeURIComponent(
             jobTitle

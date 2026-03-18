@@ -19,7 +19,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PageWrapper from "../components/common/PageWrapper";
-import { API_BASE } from "../lib/apiClient";
+import apiClient, { API_BASE } from "../lib/apiClient";
 
 const COMPANIES_PER_PAGE = 9;
 
@@ -98,7 +98,6 @@ const INDUSTRIES = [
 export default function CompaniesPage() {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
-  const apiBase = API_BASE;
   const adminEmails = ["admin@admin.com", "admin@manager.com"];
   const isAdmin =
     user?.isLocalAdmin ||
@@ -122,9 +121,7 @@ export default function CompaniesPage() {
   useEffect(() => {
     async function fetchCompanies() {
       try {
-        const res = await fetch(`${apiBase}/api/v1/companies`);
-        if (!res.ok) throw new Error(`Status ${res.status}`);
-        const json = await res.json();
+        const { data: json } = await apiClient.get("/api/v1/companies");
         setCompanies(json.data || []);
       } catch (err) {
         console.error("Failed to fetch companies", err);
@@ -134,7 +131,7 @@ export default function CompaniesPage() {
       }
     }
     fetchCompanies();
-  }, [apiBase]);
+  }, []);
 
   /* ── Derived: filtered + sorted list ── */
   const filtered = (() => {
@@ -204,18 +201,12 @@ export default function CompaniesPage() {
       return;
     }
     try {
-      const res = await fetch(
-        `${apiBase}/api/v1/companies/${company._id}/follow`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uid: user.uid, email: user.email }),
-        },
-      );
-      if (res.ok) {
-        setInfoMessage(`Now following ${company.name} ✓`);
-        setTimeout(() => setInfoMessage(""), 3000);
-      }
+      await apiClient.post(`/api/v1/companies/${company._id}/follow`, {
+        uid: user.uid,
+        email: user.email,
+      });
+      setInfoMessage(`Now following ${company.name} ✓`);
+      setTimeout(() => setInfoMessage(""), 3000);
     } catch (err) {
       console.error("Failed to follow company", err);
     }
@@ -229,13 +220,10 @@ export default function CompaniesPage() {
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`${apiBase}/api/v1/companies/${company._id}`, {
-        method: "DELETE",
-      });
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.message || "Failed to delete company");
-      }
+      const { data: json } = await apiClient.delete(
+        `/api/v1/companies/${company._id}`,
+      );
+      if (!json.success) throw new Error(json.message || "Failed to delete company");
       setCompanies((prev) =>
         prev.filter((c) => (c._id || c.id) !== (company._id || company.id)),
       );

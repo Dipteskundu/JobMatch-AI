@@ -12,9 +12,10 @@ import { User, Mail, MapPin, Phone, Briefcase, Award, Save, ArrowLeft, Camera, L
 import Link from "next/link";
 import Avatar from "../../components/common/Avatar";
 import { API_BASE } from "../../lib/apiClient";
+import apiClient from "../../lib/apiClient";
 
 export default function EditProfilePage() {
-    const { user, isAuthenticated, loading: authLoading, refreshUser } = useAuth();
+    const { user, role, isAuthenticated, loading: authLoading, refreshUser } = useAuth();
     const router = useRouter();
     const apiBase = API_BASE;
 
@@ -52,8 +53,7 @@ export default function EditProfilePage() {
 
     const fetchUserProfile = useCallback(async () => {
         try {
-            const res = await fetch(`${apiBase}/api/auth/profile/${user.uid}`);
-            const json = await res.json();
+            const { data: json } = await apiClient.get(`/api/auth/profile/${user.uid}`);
             if (json.success) {
                 const userData = json.data;
                 setFormData({
@@ -76,12 +76,14 @@ export default function EditProfilePage() {
                 });
             }
         } catch (err) {
-            console.error("Fetch profile error:", err);
-            setError("Failed to load profile data");
+            if (err.message !== "User not found") {
+                console.error("Fetch profile error:", err);
+                setError("Failed to load profile data");
+            }
         } finally {
             setFetching(false);
         }
-    }, [user?.uid, user?.photoURL, apiBase]);
+    }, [user?.uid, user?.photoURL]);
 
     useEffect(() => {
         if (user?.uid) {
@@ -225,13 +227,7 @@ export default function EditProfilePage() {
                 skills: formData.skills.split(",").map(s => s.trim()).filter(s => s !== "")
             };
 
-            const res = await fetch(`${apiBase}/api/auth/profile/${user.uid}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(processedData)
-            });
-
-            const json = await res.json();
+            const { data: json } = await apiClient.put(`/api/auth/profile/${user.uid}`, processedData);
             if (json.success) {
                 setSuccess("Profile updated successfully!");
                 setTimeout(() => router.push("/profile"), 1500);
@@ -420,6 +416,7 @@ export default function EditProfilePage() {
                         </div>
 
                         {/* Education Section */}
+                        {role === 'candidate' && (
                         <div className="bg-white p-8 sm:p-10 rounded-[2.5rem] border border-slate-100 premium-shadow space-y-6">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-xl font-black text-slate-900 flex items-center gap-3">
@@ -451,8 +448,10 @@ export default function EditProfilePage() {
                                 </div>
                             )}
                         </div>
+                        )}
 
                         {/* Projects Section */}
+                        {role === 'candidate' && (
                         <div className="bg-white p-8 sm:p-10 rounded-[2.5rem] border border-slate-100 premium-shadow space-y-6">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-xl font-black text-slate-900 flex items-center gap-3">
@@ -562,8 +561,10 @@ export default function EditProfilePage() {
                                 </div>
                             )}
                         </div>
+                        )}
 
                         {/* Certificates Section */}
+                        {role === 'candidate' && (
                         <div className="bg-white p-8 sm:p-10 rounded-[2.5rem] border border-slate-100 premium-shadow space-y-6">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-xl font-black text-slate-900 flex items-center gap-3">
@@ -673,6 +674,7 @@ export default function EditProfilePage() {
                                 </div>
                             )}
                         </div>
+                        )}
 
                         {/* Alerts */}
                         {error && (

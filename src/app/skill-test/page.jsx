@@ -7,6 +7,7 @@ import Footer from "../components/Footer/Footer";
 import { AlertCircle, Clock, Send, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { API_BASE } from "../lib/apiClient";
+import apiClient from "../lib/apiClient";
 
 export default function SkillTestPage() {
     const { user, isAuthenticated, loading } = useAuth();
@@ -33,8 +34,7 @@ export default function SkillTestPage() {
 
     const fetchProfile = async () => {
         try {
-            const res = await fetch(`${apiBase}/api/auth/profile/${user.uid}`);
-            const data = await res.json();
+            const { data } = await apiClient.get(`/api/auth/profile/${user.uid}`);
             if (data.success) {
                 const p = data.data;
                 setProfile(p);
@@ -89,15 +89,12 @@ export default function SkillTestPage() {
         setErrorMsg("");
 
         try {
-            const res = await fetch(`${apiBase}/api/skill-test/generate`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ candidateId: user.uid, skills: selectedSkills })
+            const { data } = await apiClient.post(`/api/skill-test/generate`, {
+                candidateId: user.uid,
+                skills: selectedSkills,
             });
-            const data = await res.json();
-            if (res.ok && data.success) {
+            if (data.success) {
                 setTestData(data.data);
-                // Initialize empty answers
                 const initAnswers = {};
                 data.data.questions.forEach(q => initAnswers[q.id] = "");
                 setAnswers(initAnswers);
@@ -124,17 +121,12 @@ export default function SkillTestPage() {
         }));
 
         try {
-            const res = await fetch(`${apiBase}/api/skill-test/submit`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    testId: testData.testId, 
-                    candidateId: user.uid, 
-                    answers: formattedAnswers 
-                })
+            const { data } = await apiClient.post(`/api/skill-test/submit`, {
+                testId: testData.testId,
+                candidateId: user.uid,
+                answers: formattedAnswers,
             });
-            const data = await res.json();
-            if (res.ok && data.success) {
+            if (data.success) {
                 setResultData(data.data);
                 setPageStatus("result");
             } else {

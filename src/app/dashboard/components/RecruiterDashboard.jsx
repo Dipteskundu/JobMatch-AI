@@ -21,6 +21,7 @@ import { rtdb } from "../../lib/firebaseClient";
 import Skeleton from "../../components/common/Skeleton";
 import { useScrollReveal } from "../../lib/useScrollReveal";
 import { API_BASE } from "../../lib/apiClient";
+import apiClient from "../../lib/apiClient";
 
 function StatCard({ label, value, icon: Icon, color, bg }) {
   return (
@@ -135,20 +136,15 @@ export default function RecruiterDashboard({ user, data, loading }) {
     e.preventDefault();
     setPosting(true);
     try {
-      const res = await fetch(`${API_BASE}/api/jobs/request`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...jobForm,
-          recruiterEmail: user?.email || "",
-          recruiterUid: user?.uid || "",
-          skills: jobForm.skills
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean),
-        }),
+      const { data: result } = await apiClient.post("/api/jobs/request", {
+        ...jobForm,
+        recruiterEmail: user?.email || "",
+        recruiterUid: user?.uid || "",
+        skills: jobForm.skills
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
       });
-      const result = await res.json();
       if (result.success) {
         setPostMsg({
           type: "success",
@@ -184,11 +180,7 @@ export default function RecruiterDashboard({ user, data, loading }) {
       if (feedback === null) return;
     }
     try {
-      await fetch(`${API_BASE}/api/applications/${appId}/status`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus, feedback }),
-      });
+      await apiClient.put(`/api/applications/${appId}/status`, { status: newStatus, feedback });
     } catch (err) {
       console.error("Status update failed:", err);
     }
