@@ -224,6 +224,19 @@
   background-color: rgba(15, 23, 42, 0.6) !important;
 }
 
+/* Keep interactive slate hover/focus states dark in dark mode */
+:root[data-theme="dark"] .hover\:bg-slate-50:hover,
+:root[data-theme="dark"] .hover\:bg-slate-100:hover,
+:root[data-theme="dark"] .hover\:bg-slate-200:hover,
+:root[data-theme="dark"] .focus\:bg-slate-50:focus,
+:root[data-theme="dark"] .focus\:bg-slate-100:focus,
+:root[data-theme="dark"] .focus\:bg-slate-200:focus,
+:root[data-theme="dark"] .focus-within\:bg-slate-50:focus-within,
+:root[data-theme="dark"] .focus-within\:bg-slate-100:focus-within,
+:root[data-theme="dark"] .focus-within\:bg-slate-200:focus-within {
+  background-color: rgba(30, 41, 59, 0.75) !important;
+}
+
 /* Ensure SVG icons inherit readable color in dark mode */
 :root[data-theme="dark"] svg {
   color: inherit !important;

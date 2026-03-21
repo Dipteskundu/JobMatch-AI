@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/AuthContext";
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
-import { API_BASE } from "../../lib/apiClient";
+import apiClient, { API_BASE } from "../../lib/apiClient";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -51,12 +51,10 @@ export default function SkillGapAnalysisPage({ params }) {
   async function fetchAnalysis() {
     try {
       setLoading(true);
-      // We also want to fetch job info to show the title. We can just use the job details api if needed.
-      const jobRes = await fetch(`${apiBase}/api/jobs/${jobId}`);
-      if (jobRes.ok) {
-        const jobData = await jobRes.json();
-        setJobTitle(jobData.data?.title || "Job");
-        setCompany(jobData.data?.company || "");
+      const jobRes = await apiClient.get(`/api/jobs/${jobId}`);
+      if (jobRes.data) {
+        setJobTitle(jobRes.data.data?.title || "Job");
+        setCompany(jobRes.data.data?.company || "");
       }
 
       const res = await fetch(`${apiBase}/api/skill-gap/${jobId}/${user.uid}`);

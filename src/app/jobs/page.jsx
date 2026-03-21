@@ -20,12 +20,13 @@ import {
   SlidersHorizontal,
   AlertCircle,
   LogIn,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PageWrapper from "../components/common/PageWrapper";
-import { API_BASE } from "../lib/apiClient";
+import apiClient, { API_BASE } from "../lib/apiClient";
 
 const JOBS_PER_PAGE = 9;
 
@@ -144,7 +145,10 @@ function Pagination({ current, total, onChange }) {
 export default function JobsPage() {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
-  const apiBase = API_BASE;
+  const adminEmails = ["admin@admin.com", "admin@manager.com"];
+  const isAdmin =
+    user?.isLocalAdmin ||
+    adminEmails.includes((user?.email || "").trim().toLowerCase());
 
   /* ── Data ─────────────────────────────────────── */
   const [jobs, setJobs] = useState([]);
@@ -175,9 +179,7 @@ export default function JobsPage() {
   useEffect(() => {
     async function fetchJobs() {
       try {
-        const res = await fetch(`${apiBase}/api/jobs`);
-        if (!res.ok) throw new Error(`Status ${res.status}`);
-        const json = await res.json();
+        const { data: json } = await apiClient.get("/api/jobs");
         setJobs(json.data || []);
         // If user is authenticated, also fetch their applications to hide applied jobs
         if (isAuthenticated && user?.uid) {
@@ -351,21 +353,14 @@ export default function JobsPage() {
 
     try {
       // Check verification first
-      const res = await fetch(
-        `${apiBase}/api/jobs/${job._id}/pre-apply-check`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uid: user.uid }),
-        },
+      const { data } = await apiClient.post(
+        `/api/jobs/${job._id}/pre-apply-check`,
+        { uid: user.uid },
       );
-      const data = await res.json();
 
       if (data.allowed) {
-        // Verified: proceed to Skill Gap Analysis page
         router.push(`/skill-gap-analysis/${job._id}`);
       } else if (data.redirectTo) {
-        // Not verified: go to intro page
         router.push(data.redirectTo);
       } else {
         setError(data.message || "Cannot apply at this time.");
@@ -382,15 +377,12 @@ export default function JobsPage() {
       return;
     }
     try {
-      const res = await fetch(`${apiBase}/api/jobs/${job._id}/save`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid: user.uid, email: user.email }),
+      await apiClient.post(`/api/jobs/${job._id}/save`, {
+        uid: user.uid,
+        email: user.email,
       });
-      if (res.ok) {
-        setInfoMessage("Job saved to your account ✓");
-        setTimeout(() => setInfoMessage(""), 3000);
-      }
+      setInfoMessage("Job saved to your account ✓");
+      setTimeout(() => setInfoMessage(""), 3000);
     } catch (err) {
       console.error("Failed to save job", err);
     }
@@ -402,6 +394,24 @@ export default function JobsPage() {
       return;
     }
     router.push("/resume");
+  };
+
+  const handleDeleteJob = async (job) => {
+    if (!isAdmin) return;
+    const confirmed = window.confirm(
+      `Delete job \"${job.title || "Untitled"}\" from ${job.company || "Unknown Company"}?`,
+    );
+    if (!confirmed) return;
+
+    try {
+      const { data: json } = await apiClient.delete(`/api/jobs/${job._id}`);
+      if (!json.success) throw new Error(json.message || "Failed to delete job");
+      setJobs((prev) => prev.filter((j) => j._id !== job._id));
+      setInfoMessage("Job removed successfully.");
+      setTimeout(() => setInfoMessage(""), 3000);
+    } catch (err) {
+      setError(err.message || "Could not delete the job.");
+    }
   };
 
   /* ── Sidebar filter panel (shared desktop + mobile) ── */
@@ -507,6 +517,15 @@ export default function JobsPage() {
                 perfectly matches your skills and ambitions.
               </p>
             </div>
+
+            {isAuthenticated && isAdmin && (
+              <div className="mb-8 flex items-center gap-3 px-5 py-4 bg-amber-50 border border-amber-200 rounded-2xl">
+                <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+                <p className="text-sm text-amber-800 font-medium">
+                  Admin mode: you can remove jobs directly from this page.
+                </p>
+              </div>
+            )}
 
             {/* ── Search + Location Bar ── */}
             <div
@@ -759,7 +778,7 @@ export default function JobsPage() {
                           </div>
                           {/* Right */}
                           <div className="flex items-center gap-2 shrink-0">
-                            {isAuthenticated && (
+                            {isAuthenticated && !isAdmin && (
                               <button
                                 onClick={() => setFitJob(job)}
                                 className="px-4 py-2.5 border border-indigo-200 text-indigo-600 rounded-xl font-bold text-sm hover:bg-indigo-50 transition-all text-xs"

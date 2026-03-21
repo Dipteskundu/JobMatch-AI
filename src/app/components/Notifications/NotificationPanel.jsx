@@ -16,6 +16,7 @@ import {
 import { ref, onChildAdded } from "firebase/database";
 import { rtdb } from "../../lib/firebaseClient";
 import { API_BASE } from "../../lib/apiClient";
+import apiClient from "../../lib/apiClient";
 
 const TYPE_CONFIG = {
   application_viewed: { icon: Eye, color: "text-blue-500", bg: "bg-blue-50" },
@@ -89,19 +90,14 @@ export default function NotificationPanel({
 
   const apiBase = API_BASE;
 
-  // Derive unreadCount directly during render, no effect needed
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   useEffect(() => {
     if (!uid) return;
     let mounted = true;
 
-    fetch(new URL(`/api/notifications/${uid}`, apiBase).toString())
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((json) => {
+    apiClient.get(`/api/notifications/${uid}`)
+      .then(({ data: json }) => {
         if (!mounted) return;
         if (json.success && json.data) {
           const fetchedNotifs = json.data.notifications || [];
@@ -153,7 +149,7 @@ export default function NotificationPanel({
       mounted = false;
       if (typeof unsubscribe === "function") unsubscribe();
     };
-  }, [uid, apiBase, setParentUnreadCount]);
+  }, [uid, setParentUnreadCount]);
 
   async function handleNotificationClick(notif) {
     const id = notif._id || notif.id;
@@ -167,11 +163,7 @@ export default function NotificationPanel({
     // Only mark as read if it's currently unread
     if (!notif.read) {
       try {
-        const res = await fetch(
-          new URL(`/api/notifications/${id}/read`, apiBase).toString(),
-          { method: "PATCH" },
-        );
-        const json = await res.json();
+        const { data: json } = await apiClient.patch(`/api/notifications/${id}/read`);
         if (json.success) {
           setNotifications((prev) =>
             prev.map((n) =>
@@ -190,11 +182,7 @@ export default function NotificationPanel({
 
   async function markAllRead() {
     try {
-      const res = await fetch(
-        new URL(`/api/notifications/read-all/${uid}`, apiBase).toString(),
-        { method: "PATCH" },
-      );
-      const json = await res.json();
+      const { data: json } = await apiClient.patch(`/api/notifications/read-all/${uid}`);
       if (json.success) {
         setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
         if (setParentUnreadCount) {

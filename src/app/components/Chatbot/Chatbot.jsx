@@ -184,7 +184,7 @@ export default function Chatbot() {
     const timeoutId = setTimeout(() => controller.abort(), 20000);
 
     try {
-      const response = await fetch(`${API_BASE}/api/assistant`, {
+      const response = await fetch(`/api/assistant`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt }),

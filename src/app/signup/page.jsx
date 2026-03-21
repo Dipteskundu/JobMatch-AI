@@ -7,6 +7,7 @@ import { useState } from "react";
 import { auth, googleProvider } from "../lib/firebaseClient";
 import { createUserWithEmailAndPassword, signInWithPopup, updateProfile } from "firebase/auth";
 import { API_BASE } from "../lib/apiClient";
+import apiClient from "../lib/apiClient";
 
 function normalizeAuthError(err) {
     const code = String(err?.code || "").toLowerCase();
@@ -37,19 +38,13 @@ export default function SignUpPage() {
 
     async function syncUserWithBackend(user, selectedRole) {
         try {
-            await fetch(`${apiBase}/api/auth/sync-user`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName,
-                    provider: user.providerData?.[0]?.providerId,
-                    photoURL: user.photoURL,
-                    role: selectedRole,
-                }),
+            await apiClient.post("/api/auth/sync-user", {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                provider: user.providerData?.[0]?.providerId,
+                photoURL: user.photoURL,
+                role: selectedRole,
             });
         } catch (err) {
             console.error("Failed to sync user with backend", err);
@@ -65,15 +60,21 @@ export default function SignUpPage() {
             const cred = await createUserWithEmailAndPassword(auth, email, password);
             await updateProfile(cred.user, { displayName: fullName });
 
+            // Persist role locally so dashboard can use it even if backend sync is slow/fails
+            sessionStorage.setItem("pendingRole", role);
+
             await syncUserWithBackend(
                 {
-                    ...cred.user,
+                    uid: cred.user.uid,
+                    email: cred.user.email,
                     displayName: fullName,
+                    providerData: cred.user.providerData,
+                    photoURL: cred.user.photoURL,
                 },
                 role
             );
 
-            router.push("/");
+            router.push("/dashboard");
         } catch (err) {
             console.error("Email sign up error", err);
             setError(err.message || "Failed to create account");
@@ -88,8 +89,12 @@ export default function SignUpPage() {
 
         try {
             const cred = await signInWithPopup(auth, googleProvider);
+
+            // Persist role locally so dashboard can use it even if backend sync is slow/fails
+            sessionStorage.setItem("pendingRole", role);
+
             await syncUserWithBackend(cred.user, role);
-            router.push("/");
+            router.push("/dashboard");
         } catch (err) {
             console.error("Google sign up error", err);
             setError(normalizeAuthError(err));
