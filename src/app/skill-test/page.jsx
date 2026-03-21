@@ -73,14 +73,25 @@ export default function SkillTestPage() {
 
         const allSkills = Array.isArray(p.skills) ? p.skills : [];
         const verSkills = Array.isArray(p.verifiedSkills) ? p.verifiedSkills : [];
-        const pending = allSkills.filter(s => !verSkills.includes(s));
+        const hasDeclaredSkills = allSkills.length > 0;
+        const pending = allSkills.filter((s) => !verSkills.includes(s));
+        const derivedSkillVerified = hasDeclaredSkills && pending.length === 0 && verSkills.length > 0;
+        const effectiveSkillVerified = Boolean(p.isSkillVerified) || derivedSkillVerified;
 
-        if (pending.length === 0) {
+        if (effectiveSkillVerified) {
             setPageStatus("verified"); // Already totally verified
-        } else {
-            setUnverifiedSkills(pending);
-            setPageStatus("selection");
+            return;
         }
+
+        // If no skills are declared, user cannot take the test yet.
+        if (!hasDeclaredSkills) {
+            setErrorMsg("Please add at least one skill in your profile before starting skill verification.");
+            setPageStatus("error");
+            return;
+        }
+
+        setUnverifiedSkills(pending);
+        setPageStatus("selection");
     };
 
     const startTestGeneration = async () => {
@@ -173,11 +184,6 @@ export default function SkillTestPage() {
         return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
     }, [pageStatus]);
 
-    const preventCopyPaste = (e) => {
-        e.preventDefault();
-        setWarnMsg("Copying and pasting is disabled during the test.");
-    };
-
     const handleAnswerChange = (qId, val) => {
         setAnswers(prev => ({ ...prev, [qId]: val }));
     };
@@ -232,8 +238,8 @@ export default function SkillTestPage() {
                                 </div>
                                 <h2 className="text-2xl font-black text-slate-900 mb-2">Test Unavailable</h2>
                                 <p className="text-slate-500 mb-8 max-w-md mx-auto">{errorMsg}</p>
-                                <button onClick={() => router.push("/jobs")} className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all text-sm">
-                                    Return to Jobs
+                                <button onClick={() => router.push("/resume")} className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all text-sm">
+                                    Upload Resume
                                 </button>
                             </>
                         )}
@@ -245,7 +251,7 @@ export default function SkillTestPage() {
                     <div className="bg-white p-8 rounded-[2rem] shadow-xl shadow-slate-200 border border-slate-100 max-w-2xl mx-auto w-full">
                         <h2 className="text-xl font-bold text-slate-900 mb-2">Select skills to verify</h2>
                         <p className="text-slate-500 text-sm mb-8 leading-relaxed">
-                            You have added skills to your profile that are not yet verified. Select up to 3 skills below to begin the technical test.
+                            You have added skills to your profile that are not yet verified. Select up to 3 skills below to begin an easy MCQ test.
                         </p>
 
                         <div className="space-y-3 mb-8">
@@ -285,7 +291,7 @@ export default function SkillTestPage() {
                             onClick={startTestGeneration}
                         >
                             <span className="text-base text-lg mb-1">Begin Test ({selectedSkills.length}/3)</span>
-                            <span className="font-normal text-xs text-white/70">10-Minute Time Limit</span>
+                            <span className="font-normal text-xs text-white/70">Beginner-friendly MCQ format</span>
                         </button>
                     </div>
                 )}
@@ -335,16 +341,43 @@ export default function SkillTestPage() {
                                     </div>
                                     <h3 className="text-lg font-bold text-slate-900 mb-4 leading-relaxed">{q.text}</h3>
                                     
-                                    <textarea
-                                        value={answers[q.id] || ""}
-                                        onChange={(e) => handleAnswerChange(q.id, e.target.value)}
-                                        onCopy={preventCopyPaste}
-                                        onPaste={preventCopyPaste}
-                                        disabled={pageStatus === "submitting"}
-                                        placeholder="Type your answer here..."
-                                        rows="6"
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-sm font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all resize-y placeholder:text-slate-400"
-                                    />
+                                    {Array.isArray(q.options) && q.options.length > 0 ? (
+                                        <div className="space-y-3">
+                                            {q.options.map((opt) => {
+                                                const selected = (answers[q.id] || "") === opt;
+                                                return (
+                                                    <label
+                                                        key={`${q.id}-${opt}`}
+                                                        className={`w-full flex items-start gap-3 text-left px-4 py-3 rounded-xl border transition-all select-text ${
+                                                            selected
+                                                                ? "border-indigo-600 bg-indigo-50 text-indigo-700"
+                                                                : "border-slate-200 bg-white hover:border-indigo-300 text-slate-700"
+                                                        } ${pageStatus === "submitting" ? "opacity-70 cursor-not-allowed" : "cursor-pointer"}`}
+                                                    >
+                                                        <input
+                                                            type="radio"
+                                                            name={`question-${q.id}`}
+                                                            value={opt}
+                                                            checked={selected}
+                                                            disabled={pageStatus === "submitting"}
+                                                            onChange={() => handleAnswerChange(q.id, opt)}
+                                                            className="mt-1"
+                                                        />
+                                                        <span className="select-text">{opt}</span>
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <textarea
+                                            value={answers[q.id] || ""}
+                                            onChange={(e) => handleAnswerChange(q.id, e.target.value)}
+                                            disabled={pageStatus === "submitting"}
+                                            placeholder="Type your answer here..."
+                                            rows="6"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-sm font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all resize-y placeholder:text-slate-400 select-text"
+                                        />
+                                    )}
                                 </div>
                             ))}
                         </div>

@@ -40,6 +40,7 @@ export default function Navbar() {
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme, mounted } = useTheme();
+  const [profileRoleLabel, setProfileRoleLabel] = useState(null);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -85,6 +86,38 @@ export default function Navbar() {
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
+  }, [apiBase, isAuthenticated, user?.uid]);
+
+  // Fetch user profile from backend to determine role/label (Recruiter / Pro member etc.)
+  useEffect(() => {
+    if (!isAuthenticated || !user?.uid) return;
+    let mountedFlag = true;
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(
+          new URL(`/api/auth/profile/${user.uid}`, apiBase).toString(),
+        );
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!json.success || !json.data) return;
+        const profile = json.data;
+        let label = "Member";
+        if (profile.role === "recruiter" || profile.role === "employer") {
+          label = "Recruiter";
+        } else if (profile.isPro) {
+          label = "Pro Member";
+        } else if (profile.role === "admin") {
+          label = "Admin";
+        }
+        if (mountedFlag) setProfileRoleLabel(label);
+      } catch (err) {
+        // ignore profile fetch errors
+      }
+    };
+    fetchProfile();
+    return () => {
+      mountedFlag = false;
+    };
   }, [apiBase, isAuthenticated, user?.uid]);
 
   const navLinks = [
@@ -147,6 +180,26 @@ export default function Navbar() {
     if (href) router.push(href);
   };
 
+  // Search handling
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const submitSearch = (q) => {
+    const term = (q || searchQuery || "").trim();
+    if (!term) return;
+    // Navigate to jobs page with search param
+    router.push(`/jobs?search=${encodeURIComponent(term)}`);
+    setSearchQuery("");
+    setSearchOpen(false);
+    setMobileOpen(false);
+  };
+
+  const onKeyDownSearch = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      submitSearch();
+    }
+  };
+
   return (
     <>
       <header
@@ -196,6 +249,9 @@ export default function Navbar() {
                       type="text"
                       placeholder="Search jobs or skills..."
                       className="bg-transparent text-[13px] text-slate-700 placeholder-slate-400 outline-none w-full"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={onKeyDownSearch}
                     />
                   </div>
                   <Link
@@ -249,7 +305,9 @@ export default function Navbar() {
                           {userDisplayName}
                         </p>
                         <p className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wide leading-tight">
-                          PRO MEMBER
+                          {profileRoleLabel
+                            ? profileRoleLabel.toUpperCase()
+                            : "PRO MEMBER"}
                         </p>
                       </div>
                       <Avatar
@@ -362,9 +420,16 @@ export default function Navbar() {
                   type="text"
                   placeholder="Search jobs, companies, or skills..."
                   className="bg-transparent text-[14px] text-slate-700 placeholder-slate-400 outline-none w-full"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={onKeyDownSearch}
                 />
                 <button
-                  onClick={() => setSearchOpen(false)}
+                  onClick={() => {
+                    // close or submit depending on whether a query exists
+                    if (searchQuery.trim()) submitSearch(searchQuery);
+                    else setSearchOpen(false);
+                  }}
                   className="text-slate-400 hover:text-slate-700"
                 >
                   <X className="w-4 h-4" />
@@ -428,7 +493,7 @@ export default function Navbar() {
                     {userDisplayName}
                   </p>
                   <p className="text-indigo-200 text-xs font-semibold uppercase tracking-wider">
-                    Pro Member
+                    {profileRoleLabel || "Pro Member"}
                   </p>
                 </div>
               </div>

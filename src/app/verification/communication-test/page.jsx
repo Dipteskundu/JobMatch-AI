@@ -128,11 +128,6 @@ export default function CommunicationTestPage() {
     return () => document.removeEventListener("visibilitychange", handler);
   }, [pageStatus]);
 
-  const preventCopyPaste = (e) => {
-    e.preventDefault();
-    setWarnMsg("Copying and pasting is disabled during the test.");
-  };
-
   if (loading || pageStatus === "loading") {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
@@ -226,12 +221,10 @@ export default function CommunicationTestPage() {
                   <textarea
                     value={answers[q.id] || ""}
                     onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
-                    onCopy={preventCopyPaste}
-                    onPaste={preventCopyPaste}
                     disabled={pageStatus === "submitting"}
                     placeholder="Write your professional response here..."
                     rows="6"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-sm font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all resize-y placeholder:text-slate-400"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-sm font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all resize-y placeholder:text-slate-400 select-text"
                   />
                 </div>
               ))}

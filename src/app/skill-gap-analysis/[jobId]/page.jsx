@@ -14,20 +14,20 @@ import {
   BookOpen,
   Briefcase,
   Loader2,
-  ChevronLeft
+  ChevronLeft,
 } from "lucide-react";
 
 export default function SkillGapAnalysisPage({ params }) {
   // Extract params via React.use() to avoid Next.js warnings about async params
   const { jobId } = use(params);
-  
+
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const apiBase = API_BASE;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   const [matchScore, setMatchScore] = useState(0);
   const [matchedSkills, setMatchedSkills] = useState([]);
   const [missingSkills, setMissingSkills] = useState([]);
@@ -64,7 +64,7 @@ export default function SkillGapAnalysisPage({ params }) {
         throw new Error("Analysis failed to load");
       }
       const data = await res.json();
-      
+
       if (data.success) {
         setMatchScore(data.data.matchScore || 0);
         setMatchedSkills(data.data.matchedSkills || []);
@@ -87,21 +87,17 @@ export default function SkillGapAnalysisPage({ params }) {
       const res = await fetch(`${apiBase}/api/jobs/${jobId}/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          uid: user.uid, 
+        body: JSON.stringify({
+          uid: user.uid,
           email: user.email,
           jobTitle: jobTitle,
           company: company,
-          location: "" // we don't have location here but it's optional
+          location: "", // we don't have location here but it's optional
         }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        router.push(
-          `/communication/start?jobId=${jobId}&jobTitle=${encodeURIComponent(
-            jobTitle
-          )}&company=${encodeURIComponent(company)}`
-        );
+        router.push("/applications");
       } else {
         alert(data.message || "Application failed. Please try again.");
       }
@@ -119,9 +115,12 @@ export default function SkillGapAnalysisPage({ params }) {
         <Navbar />
         <main className="flex-1 flex flex-col items-center justify-center py-20">
           <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
-          <h2 className="text-xl font-bold text-slate-900">Analyzing Your Resume...</h2>
+          <h2 className="text-xl font-bold text-slate-900">
+            Analyzing Your Resume...
+          </h2>
           <p className="text-slate-500 mt-2 max-w-sm text-center">
-            Our AI is comparing your profile against the job requirements to generate a personalized skill gap report.
+            Our AI is comparing your profile against the job requirements to
+            generate a personalized skill gap report.
           </p>
         </main>
         <Footer />
@@ -135,9 +134,11 @@ export default function SkillGapAnalysisPage({ params }) {
         <Navbar />
         <main className="flex-1 flex flex-col items-center pt-20 pb-24 px-4">
           <AlertTriangle className="w-16 h-16 text-red-500 mb-6" />
-          <h2 className="text-2xl font-black text-slate-900 mb-3">Analysis Error</h2>
+          <h2 className="text-2xl font-black text-slate-900 mb-3">
+            Analysis Error
+          </h2>
           <p className="text-slate-500 mb-8">{error}</p>
-          <button 
+          <button
             onClick={() => router.back()}
             className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors"
           >
@@ -152,7 +153,7 @@ export default function SkillGapAnalysisPage({ params }) {
   return (
     <div className="min-h-screen bg-[#fdfdfe] flex flex-col font-sans">
       <Navbar />
-      
+
       <main className="flex-1 pt-12 pb-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">
         {/* Header */}
         <div className="mb-10 text-center">
@@ -162,30 +163,49 @@ export default function SkillGapAnalysisPage({ params }) {
           <h1 className="text-3xl md:text-4xl font-black text-slate-900">
             {jobTitle}
           </h1>
-          {company && <p className="text-lg text-slate-500 mt-2 font-medium">at {company}</p>}
+          {company && (
+            <p className="text-lg text-slate-500 mt-2 font-medium">
+              at {company}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
           {/* Left Column (Match Score & Skills Overview) */}
           <div className="lg:col-span-1 space-y-8">
-            
             {/* Match Score Card */}
             <div className="bg-white rounded-3xl p-8 border border-slate-100 premium-shadow flex flex-col items-center">
-              <h3 className="font-extrabold text-slate-900 mb-6 w-full text-center">Your Match Score</h3>
-              
+              <h3 className="font-extrabold text-slate-900 mb-6 w-full text-center">
+                Your Match Score
+              </h3>
+
               <div className="relative w-40 h-40 flex items-center justify-center mb-4">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                <svg
+                  className="w-full h-full transform -rotate-90"
+                  viewBox="0 0 120 120"
+                >
                   {/* Background Circle */}
-                  <circle 
-                    cx="60" cy="60" r="50" 
-                    fill="none" stroke="#f1f5f9" strokeWidth="12" 
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="50"
+                    fill="none"
+                    stroke="#f1f5f9"
+                    strokeWidth="12"
                   />
                   {/* Foreground Progress */}
-                  <circle 
-                    cx="60" cy="60" r="50" 
-                    fill="none" 
-                    stroke={matchScore >= 80 ? "#10b981" : matchScore >= 50 ? "#f59e0b" : "#ef4444"} 
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="50"
+                    fill="none"
+                    stroke={
+                      matchScore >= 80
+                        ? "#10b981"
+                        : matchScore >= 50
+                          ? "#f59e0b"
+                          : "#ef4444"
+                    }
                     strokeWidth="12"
                     strokeLinecap="round"
                     strokeDasharray={`${(matchScore / 100) * (2 * Math.PI * 50)} 314`}
@@ -193,20 +213,23 @@ export default function SkillGapAnalysisPage({ params }) {
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center justify-center">
-                  <span className="text-4xl font-black text-slate-900">{matchScore}%</span>
+                  <span className="text-4xl font-black text-slate-900">
+                    {matchScore}%
+                  </span>
                 </div>
               </div>
-              
+
               <p className="text-sm font-medium text-slate-500 text-center">
-                {matchScore >= 80 ? "Strong match! You meet most requirements." : 
-                 matchScore >= 50 ? "Moderate match. Consider upskilling." : 
-                 "Low match. Significant upskilling recommended."}
+                {matchScore >= 80
+                  ? "Strong match! You meet most requirements."
+                  : matchScore >= 50
+                    ? "Moderate match. Consider upskilling."
+                    : "Low match. Significant upskilling recommended."}
               </p>
             </div>
 
             {/* Skills Overview */}
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 premium-shadow">
-              
               {/* Skills You Have */}
               <div className="mb-8">
                 <h4 className="flex items-center gap-2 text-sm font-black text-slate-900 uppercase tracking-wide mb-4">
@@ -217,14 +240,19 @@ export default function SkillGapAnalysisPage({ params }) {
                 </h4>
                 {matchedSkills.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {matchedSkills.map(s => (
-                      <span key={s} className="px-3 py-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm font-bold rounded-xl">
+                    {matchedSkills.map((s) => (
+                      <span
+                        key={s}
+                        className="px-3 py-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm font-bold rounded-xl"
+                      >
                         {s}
                       </span>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500 italic">No matching skills found.</p>
+                  <p className="text-sm text-slate-500 italic">
+                    No matching skills found.
+                  </p>
                 )}
               </div>
 
@@ -238,29 +266,34 @@ export default function SkillGapAnalysisPage({ params }) {
                 </h4>
                 {missingSkills.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {missingSkills.map(s => (
-                      <span key={s} className="px-3 py-1.5 bg-amber-50 border border-amber-100 text-amber-700 text-sm font-bold rounded-xl">
+                    {missingSkills.map((s) => (
+                      <span
+                        key={s}
+                        className="px-3 py-1.5 bg-amber-50 border border-amber-100 text-amber-700 text-sm font-bold rounded-xl"
+                      >
                         {s}
                       </span>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500 italic">You have all the required skills!</p>
+                  <p className="text-sm text-slate-500 italic">
+                    You have all the required skills!
+                  </p>
                 )}
               </div>
-              
             </div>
-            
           </div>
 
           {/* Right Column (AI Suggestions & Action Buttons) */}
           <div className="lg:col-span-2 space-y-6">
-            
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-2xl font-black text-slate-900">AI Learning Path</h2>
+                <h2 className="text-2xl font-black text-slate-900">
+                  AI Learning Path
+                </h2>
                 <p className="text-slate-500 mt-1 max-w-lg leading-relaxed">
-                  Our AI analyzed your missing skills and created a personalized roadmap to help you qualify for this position.
+                  Our AI analyzed your missing skills and created a personalized
+                  roadmap to help you qualify for this position.
                 </p>
               </div>
             </div>
@@ -269,7 +302,10 @@ export default function SkillGapAnalysisPage({ params }) {
             <div className="space-y-4">
               {suggestions.length > 0 ? (
                 suggestions.map((suggestion, idx) => (
-                  <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-100 premium-shadow flex gap-4">
+                  <div
+                    key={idx}
+                    className="bg-white p-6 rounded-2xl border border-slate-100 premium-shadow flex gap-4"
+                  >
                     <div className="w-12 h-12 shrink-0 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center font-black">
                       {idx + 1}
                     </div>
@@ -286,39 +322,50 @@ export default function SkillGapAnalysisPage({ params }) {
                 ))
               ) : missingSkills.length > 0 ? (
                 <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 text-center">
-                  <p className="text-slate-500">Generating suggestions failed or no suggestions available.</p>
+                  <p className="text-slate-500">
+                    Generating suggestions failed or no suggestions available.
+                  </p>
                 </div>
               ) : (
                 <div className="bg-emerald-50 p-8 rounded-2xl border border-emerald-100 text-center">
                   <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <CheckCircle2 className="w-8 h-8" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-2">You are perfectly qualified!</h3>
-                  <p className="text-slate-600">You already possess all the core skills for this role. You are ready to apply.</p>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">
+                    You are perfectly qualified!
+                  </h3>
+                  <p className="text-slate-600">
+                    You already possess all the core skills for this role. You
+                    are ready to apply.
+                  </p>
                 </div>
               )}
             </div>
 
             {/* Action Buttons */}
             <div className="mt-8 bg-slate-50 p-6 sm:p-8 rounded-3xl border border-slate-200 flex flex-col sm:flex-row items-center gap-4">
-              <button 
-                onClick={() => window.open(`https://www.google.com/search?q=Learn+${missingSkills.join("+")}`, '_blank')}
+              <button
+                onClick={() =>
+                  window.open(
+                    `https://www.google.com/search?q=Learn+${missingSkills.join("+")}`,
+                    "_blank",
+                  )
+                }
                 className="w-full sm:w-auto flex-1 px-6 py-4 bg-white border-2 border-slate-900 text-slate-900 rounded-2xl font-black text-center hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-2"
               >
                 Start Learning
               </button>
-              
-              <button 
+
+              <button
                 onClick={handleApplyAnyway}
                 disabled={applying}
                 className="w-full sm:w-auto flex-1 px-6 py-4 bg-indigo-600 border-2 border-indigo-600 text-white rounded-2xl font-black text-center hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
               >
-                {applying ? "Submitting..." : "Apply Anyway"} <ArrowRight className="w-5 h-5" />
+                {applying ? "Submitting..." : "Apply Anyway"}{" "}
+                <ArrowRight className="w-5 h-5" />
               </button>
             </div>
-            
           </div>
-          
         </div>
       </main>
 
