@@ -152,6 +152,7 @@ export default function JobsPage() {
 
   /* ── Data ─────────────────────────────────────── */
   const [jobs, setJobs] = useState([]);
+  const [appliedJobIds, setAppliedJobIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [infoMessage, setInfoMessage] = useState("");
@@ -180,6 +181,39 @@ export default function JobsPage() {
       try {
         const { data: json } = await apiClient.get("/api/jobs");
         setJobs(json.data || []);
+        // If user is authenticated, also fetch their applications to hide applied jobs
+        if (isAuthenticated && user?.uid) {
+          try {
+            const dashRes = await fetch(
+              `${apiBase}/api/dashboard/candidate/${user.uid}`,
+            );
+            if (dashRes.ok) {
+              const dashJson = await dashRes.json();
+              const apps = dashJson.data?.applications || [];
+              const ids = new Set();
+              const normalize = (val) => {
+                if (!val) return "";
+                if (typeof val === "string") return val;
+                if (val.$oid) return val.$oid;
+                try {
+                  const s = String(val);
+                  const m = s.match(/([a-f0-9]{24})/i);
+                  if (m) return m[1];
+                  return s;
+                } catch (e) {
+                  return "";
+                }
+              };
+              apps.forEach((a) => {
+                const jid = normalize(a.jobId);
+                if (jid) ids.add(jid);
+              });
+              setAppliedJobIds(ids);
+            }
+          } catch (err) {
+            console.error("Failed to fetch candidate applications:", err);
+          }
+        }
       } catch (err) {
         console.error("Failed to fetch jobs", err);
         setError("Could not load jobs. Please try again later.");
@@ -188,7 +222,7 @@ export default function JobsPage() {
       }
     }
     fetchJobs();
-  }, []);
+  }, [apiBase, isAuthenticated, user]);
 
   /* ── Auto-Open Modal from Notification Link ───── */
   useEffect(() => {
@@ -281,6 +315,10 @@ export default function JobsPage() {
             (parseSalaryMid(a.salary || a.salaryRange) || 0) -
             (parseSalaryMid(b.salary || b.salaryRange) || 0),
         );
+      }
+      // Remove jobs the candidate already applied to
+      if (appliedJobIds && appliedJobIds.size > 0) {
+        list = list.filter((j) => !appliedJobIds.has(String(j._id)));
       }
       // "newest" keeps server order
     }
@@ -749,30 +787,29 @@ export default function JobsPage() {
                                 Check Fit
                               </button>
                             )}
-                            {isAdmin ? (
+                            {appliedJobIds &&
+                            appliedJobIds.has(String(job._id)) ? (
                               <button
-                                onClick={() => handleDeleteJob(job)}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-xl font-bold text-sm hover:bg-red-600 hover:text-white transition-all"
+                                disabled
+                                className="px-6 py-2.5 bg-slate-200 text-slate-500 rounded-xl font-bold text-sm cursor-default"
                               >
-                                <Trash2 className="w-4 h-4" /> Delete Job
+                                Applied
                               </button>
                             ) : (
-                              <>
-                                <button
-                                  onClick={() => handleApply(job)}
-                                  className="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-indigo-600 transition-all active:scale-95"
-                                >
-                                  Apply Now
-                                </button>
-                                <button
-                                  onClick={() => handleSave(job)}
-                                  className="p-2.5 border border-slate-100 rounded-xl hover:bg-amber-50 hover:border-amber-200 transition-colors group/star"
-                                  aria-label="Save job"
-                                >
-                                  <Star className="w-4.5 w-[18px] h-[18px] text-slate-300 group-hover/star:text-amber-400 transition-colors" />
-                                </button>
-                              </>
+                              <button
+                                onClick={() => handleApply(job)}
+                                className="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-indigo-600 transition-all active:scale-95"
+                              >
+                                Apply Now
+                              </button>
                             )}
+                            <button
+                              onClick={() => handleSave(job)}
+                              className="p-2.5 border border-slate-100 rounded-xl hover:bg-amber-50 hover:border-amber-200 transition-colors group/star"
+                              aria-label="Save job"
+                            >
+                              <Star className="w-4.5 w-[18px] h-[18px] text-slate-300 group-hover/star:text-amber-400 transition-colors" />
+                            </button>
                           </div>
                         </div>
 
