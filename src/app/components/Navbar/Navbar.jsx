@@ -40,7 +40,11 @@ export default function Navbar({ isDashboard = false }) {
   const profileRef = useRef(null);
   const pathname = usePathname();
   const router = useRouter();
+<<<<<<< HEAD
   const { user, isAuthenticated, role, logout } = useAuth();
+=======
+  const { user, isAuthenticated, logout, claims } = useAuth();
+>>>>>>> 76c074d (Save changes)
   const { theme, toggleTheme, mounted } = useTheme();
   const [profileRoleLabel, setProfileRoleLabel] = useState(null);
 
@@ -91,6 +95,12 @@ export default function Navbar({ isDashboard = false }) {
   // Fetch user profile from backend to determine role/label (Recruiter / Pro member etc.)
   useEffect(() => {
     if (!isAuthenticated || !user?.uid) return;
+    // If token claims indicate admin, prefer that immediately
+    if (claims && claims.role === "admin") {
+      setProfileRoleLabel("Admin");
+      return;
+    }
+
     let mountedFlag = true;
     const fetchProfile = async () => {
       try {
@@ -118,7 +128,7 @@ export default function Navbar({ isDashboard = false }) {
     return () => {
       mountedFlag = false;
     };
-  }, [apiBase, isAuthenticated, user?.uid]);
+  }, [apiBase, isAuthenticated, user?.uid, claims]);
 
   const navLinks = [
     { name: "Home", href: "/", icon: Home },
@@ -216,6 +226,17 @@ export default function Navbar({ isDashboard = false }) {
   };
 
   const userMenuItems = getRoleBasedMenuItems();
+
+  const isAdmin =
+    (claims && claims.role === "admin") ||
+    user?.role === "admin" ||
+    (user && user.email === "admin@manager.com");
+
+  const filteredUserMenuItems = userMenuItems.filter((it) => {
+    if (!isAdmin) return true;
+    // hide these items for admin users
+    return !["My Applications", "Skill Gap Detection"].includes(it.label);
+  });
 
   const userDisplayName =
     user?.displayName || user?.email?.split("@")[0] || "User";
@@ -389,20 +410,22 @@ export default function Navbar({ isDashboard = false }) {
                             </div>
                           </div>
                         </div>
-                        {userMenuItems.map(({ icon: Icon, label, href }) => (
-                          <button
-                            key={label}
-                            type="button"
-                            onClick={() => {
-                              setProfileOpen(false);
-                              router.push(href);
-                            }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                          >
-                            <Icon className="w-4 h-4 text-slate-400" />
-                            {label}
-                          </button>
-                        ))}
+                        {filteredUserMenuItems.map(
+                          ({ icon: Icon, label, href }) => (
+                            <button
+                              key={label}
+                              type="button"
+                              onClick={() => {
+                                setProfileOpen(false);
+                                router.push(href);
+                              }}
+                              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                            >
+                              <Icon className="w-4 h-4 text-slate-400" />
+                              {label}
+                            </button>
+                          ),
+                        )}
                         <div className="border-t border-slate-100 mt-1 pt-1">
                           <button
                             type="button"

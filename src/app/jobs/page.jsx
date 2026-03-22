@@ -23,6 +23,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { auth } from "../lib/firebaseClient";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PageWrapper from "../components/common/PageWrapper";
@@ -143,7 +144,7 @@ function Pagination({ current, total, onChange }) {
 }
 
 export default function JobsPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, claims, isAuthenticated } = useAuth();
   const router = useRouter();
   const adminEmails = ["admin@admin.com", "admin@manager.com"];
   const isAdmin =
@@ -388,6 +389,28 @@ export default function JobsPage() {
     }
   };
 
+  const handleDeleteJob = async (jobId) => {
+    if (!user) {
+      router.push("/signin");
+      return;
+    }
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(`${apiBase}/api/jobs/${jobId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Delete failed");
+      setJobs((prev) => prev.filter((j) => String(j._id) !== String(jobId)));
+      setInfoMessage("Job deleted");
+      setTimeout(() => setInfoMessage(""), 3000);
+    } catch (err) {
+      console.error("Delete job error:", err);
+      setInfoMessage("Failed to delete job");
+      setTimeout(() => setInfoMessage(""), 3000);
+    }
+  };
+
   const handleUploadResumeClick = () => {
     if (!isAuthenticated) {
       router.push("/signin");
@@ -488,12 +511,18 @@ export default function JobsPage() {
           <p className="text-slate-400 text-xs mb-4 leading-relaxed">
             Upload your resume and let our AI find perfect roles for you.
           </p>
-          <button
-            onClick={handleUploadResumeClick}
-            className="w-full py-2.5 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-slate-100 transition-colors"
-          >
-            Upload Resume
-          </button>
+          {!(
+            claims?.role === "admin" ||
+            user?.role === "admin" ||
+            (user && user.email === "admin@manager.com")
+          ) && (
+            <button
+              onClick={handleUploadResumeClick}
+              className="w-full py-2.5 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-slate-100 transition-colors"
+            >
+              Upload Resume
+            </button>
+          )}
         </div>
         <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-indigo-600/20 rounded-full blur-2xl group-hover:bg-indigo-600/40 transition-all duration-500" />
       </div>
@@ -778,6 +807,7 @@ export default function JobsPage() {
                           </div>
                           {/* Right */}
                           <div className="flex items-center gap-2 shrink-0">
+<<<<<<< HEAD
                             {isAuthenticated && !isAdmin && (
                               <button
                                 onClick={() => setFitJob(job)}
@@ -787,6 +817,34 @@ export default function JobsPage() {
                                 Check Fit
                               </button>
                             )}
+=======
+                            {isAuthenticated &&
+                              !(
+                                claims?.role === "admin" ||
+                                user?.role === "admin" ||
+                                (user && user.email === "admin@manager.com")
+                              ) && (
+                                <button
+                                  onClick={() => setFitJob(job)}
+                                  className="px-4 py-2.5 border border-indigo-200 text-indigo-600 rounded-xl font-bold text-sm hover:bg-indigo-50 transition-all text-xs"
+                                  title="See how well you match this job"
+                                >
+                                  Check Fit
+                                </button>
+                              )}
+                            {user &&
+                              (claims?.role === "admin" ||
+                                user?.role === "admin" ||
+                                (user &&
+                                  user.email === "admin@manager.com")) && (
+                                <button
+                                  onClick={() => handleDeleteJob(job._id)}
+                                  className="ml-2 px-3 py-2 bg-red-50 text-red-700 rounded-xl font-semibold text-sm border border-red-100 hover:bg-red-100"
+                                >
+                                  Delete
+                                </button>
+                              )}
+>>>>>>> 76c074d (Save changes)
                             {appliedJobIds &&
                             appliedJobIds.has(String(job._id)) ? (
                               <button
@@ -796,12 +854,19 @@ export default function JobsPage() {
                                 Applied
                               </button>
                             ) : (
-                              <button
-                                onClick={() => handleApply(job)}
-                                className="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-indigo-600 transition-all active:scale-95"
-                              >
-                                Apply Now
-                              </button>
+                              // Hide Apply button for admin users
+                              !(
+                                claims?.role === "admin" ||
+                                user?.role === "admin" ||
+                                (user && user.email === "admin@manager.com")
+                              ) && (
+                                <button
+                                  onClick={() => handleApply(job)}
+                                  className="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-indigo-600 transition-all active:scale-95"
+                                >
+                                  Apply Now
+                                </button>
+                              )
                             )}
                             <button
                               onClick={() => handleSave(job)}

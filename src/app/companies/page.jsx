@@ -16,6 +16,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { auth } from "../lib/firebaseClient";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PageWrapper from "../components/common/PageWrapper";
@@ -33,7 +34,7 @@ function Pagination({ current, total, onChange }) {
       aria-label="Pagination"
     >
       <button
-        onClick={() => onChange(current - 1)}
+        onClick={() => onChange(Math.max(1, current - 1))}
         disabled={current === 1}
         className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         aria-label="Previous page"
@@ -41,39 +42,23 @@ function Pagination({ current, total, onChange }) {
         <ChevronLeft className="w-4 h-4" />
       </button>
 
-      {pages.map((p) => {
-        const isEllipsis =
-          total > 7 &&
-          p !== 1 &&
-          p !== total &&
-          (p < current - 2 || p > current + 2);
-        if (isEllipsis) {
-          if (p === current - 3 || p === current + 3)
-            return (
-              <span key={p} className="px-1 text-slate-400">
-                …
-              </span>
-            );
-          return null;
-        }
-        return (
-          <button
-            key={p}
-            onClick={() => onChange(p)}
-            className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-bold transition-colors ${
-              p === current
-                ? "bg-indigo-600 text-white shadow-sm"
-                : "border border-slate-200 text-slate-600 hover:bg-slate-50"
-            }`}
-            aria-current={p === current ? "page" : undefined}
-          >
-            {p}
-          </button>
-        );
-      })}
+      {pages.map((p) => (
+        <button
+          key={p}
+          onClick={() => onChange(p)}
+          className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-bold transition-colors ${
+            p === current
+              ? "bg-indigo-600 text-white shadow-sm"
+              : "border border-slate-200 text-slate-600 hover:bg-slate-50"
+          }`}
+          aria-current={p === current ? "page" : undefined}
+        >
+          {p}
+        </button>
+      ))}
 
       <button
-        onClick={() => onChange(current + 1)}
+        onClick={() => onChange(Math.min(total, current + 1))}
         disabled={current === total}
         className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         aria-label="Next page"
@@ -96,7 +81,7 @@ const INDUSTRIES = [
 ];
 
 export default function CompaniesPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, claims, isAuthenticated } = useAuth();
   const router = useRouter();
   const adminEmails = ["admin@admin.com", "admin@manager.com"];
   const isAdmin =
@@ -212,6 +197,7 @@ export default function CompaniesPage() {
     }
   };
 
+<<<<<<< HEAD
   const handleDeleteCompany = async (company) => {
     if (!isAdmin) return;
     const confirmed = window.confirm(
@@ -234,6 +220,54 @@ export default function CompaniesPage() {
     }
   };
 
+=======
+  const handleDeleteCompany = async (companyId) => {
+    // This function will be invoked by the confirmation modal.
+    if (!user) {
+      router.push("/signin");
+      return;
+    }
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(`${apiBase}/api/companies/${companyId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed");
+      setCompanies((prev) =>
+        prev.filter((c) => String(c._id) !== String(companyId)),
+      );
+      setInfoMessage("Company deleted");
+      setTimeout(() => setInfoMessage(""), 3000);
+    } catch (err) {
+      console.error("Delete company error:", err);
+      setInfoMessage("Failed to delete company");
+      setTimeout(() => setInfoMessage(""), 3000);
+    }
+  };
+
+  // Confirmation modal state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState(null);
+
+  const requestDeleteCompany = (company) => {
+    setCompanyToDelete(company);
+    setConfirmOpen(true);
+  };
+
+  const cancelDelete = () => {
+    setCompanyToDelete(null);
+    setConfirmOpen(false);
+  };
+
+  const confirmDelete = async () => {
+    if (!companyToDelete) return;
+    await handleDeleteCompany(companyToDelete._id || companyToDelete.id);
+    setCompanyToDelete(null);
+    setConfirmOpen(false);
+  };
+
+>>>>>>> 76c074d (Save changes)
   return (
     <div className="min-h-screen bg-[#fdfdfe]">
       <Navbar />
@@ -461,6 +495,7 @@ export default function CompaniesPage() {
                           {company.openJobs ?? "—"}
                         </span>
                       </div>
+<<<<<<< HEAD
                       <button
                         type="button"
                         onClick={() =>
@@ -485,6 +520,36 @@ export default function CompaniesPage() {
                           <ChevronRight className="w-4 h-4" />
                         )}
                       </button>
+=======
+                      <div className="flex items-center gap-2">
+                        {/* Hide Follow/Sign in for admin users */}
+                        {!(
+                          claims?.role === "admin" ||
+                          user?.role === "admin" ||
+                          (user && user.email === "admin@manager.com")
+                        ) && (
+                          <button
+                            type="button"
+                            onClick={() => handleFollow(company)}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-indigo-600 transition-all active:scale-95"
+                          >
+                            {isAuthenticated ? "Follow" : "Sign in"}{" "}
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        )}
+                        {user &&
+                          (claims?.role === "admin" ||
+                            user?.role === "admin" ||
+                            (user && user.email === "admin@manager.com")) && (
+                            <button
+                              onClick={() => requestDeleteCompany(company)}
+                              className="px-3 py-2 bg-red-50 text-red-700 rounded-xl font-semibold text-sm border border-red-100 hover:bg-red-100"
+                            >
+                              Delete
+                            </button>
+                          )}
+                      </div>
+>>>>>>> 76c074d (Save changes)
                     </div>
 
                     {/* Decorative glow */}
@@ -540,6 +605,45 @@ export default function CompaniesPage() {
       </main>
 
       <Footer />
+
+      {confirmOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm"
+            onClick={cancelDelete}
+            aria-hidden="true"
+          />
+
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-white rounded-[1.5rem] shadow-2xl border border-slate-100 overflow-hidden">
+              <div className="p-6 border-b border-slate-50">
+                <h3 className="text-lg font-black text-slate-900">
+                  Confirm deletion
+                </h3>
+                <p className="text-sm text-slate-500 mt-2">
+                  Are you sure you want to delete "
+                  {companyToDelete?.name || "this company"}"? This action cannot
+                  be undone.
+                </p>
+              </div>
+              <div className="flex items-center justify-end gap-3 p-4">
+                <button
+                  onClick={cancelDelete}
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-4 py-2 rounded-xl bg-red-600 text-white font-black hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

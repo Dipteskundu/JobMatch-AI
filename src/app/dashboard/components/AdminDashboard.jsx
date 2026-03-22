@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Search,
+<<<<<<< HEAD
   Activity,
   Ban,
   Eye,
@@ -22,6 +23,12 @@ import {
 import Skeleton from "../../components/common/Skeleton";
 import { API_BASE } from "../../lib/apiClient";
 import apiClient from "../../lib/apiClient";
+=======
+} from "lucide-react";
+import Skeleton from "../../components/common/Skeleton";
+import Link from "next/link";
+import { useScrollReveal } from "../../lib/useScrollReveal";
+>>>>>>> 76c074d (Save changes)
 
 function StatCard({ label, value, icon: Icon, color, bg }) {
   return (
@@ -32,13 +39,18 @@ function StatCard({ label, value, icon: Icon, color, bg }) {
         <Icon className="w-6 h-6" aria-hidden="true" />
       </div>
       <div>
+<<<<<<< HEAD
         <p className="text-2xl font-bold text-slate-900">{value ?? ""}</p>
+=======
+        <p className="text-2xl font-bold text-slate-900">{value}</p>
+>>>>>>> 76c074d (Save changes)
         <p className="text-sm text-slate-500 font-medium mt-0.5">{label}</p>
       </div>
     </div>
   );
 }
 
+<<<<<<< HEAD
 function UserRow({ user, onBan, onUnban }) {
   const ROLE_BADGE = {
     admin: "bg-amber-100 text-amber-700",
@@ -329,6 +341,45 @@ export default function AdminDashboard({
   };
 
   if (loading || propLoading) {
+=======
+export default function AdminDashboard({ user, data, loading }) {
+  const [searchUser, setSearchUser] = useState("");
+  const [actionMsg, setActionMsg] = useState(null);
+  const revealRef = useScrollReveal();
+
+  const stats = [
+    {
+      label: "Total Users",
+      value: data?.stats?.totalUsers ?? "—",
+      icon: Users,
+      color: "text-indigo-600",
+      bg: "bg-indigo-50",
+    },
+    {
+      label: "Active Jobs",
+      value: data?.stats?.totalJobs ?? "—",
+      icon: Briefcase,
+      color: "text-blue-600",
+      bg: "bg-blue-50",
+    },
+    {
+      label: "Applications",
+      value: data?.stats?.totalApplications ?? "—",
+      icon: TrendingUp,
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
+    },
+    {
+      label: "Companies",
+      value: data?.stats?.totalCompanies ?? "—",
+      icon: Building2,
+      color: "text-amber-600",
+      bg: "bg-amber-50",
+    },
+  ];
+
+  if (loading) {
+>>>>>>> 76c074d (Save changes)
     return (
       <div
         className="space-y-6"
@@ -348,11 +399,23 @@ export default function AdminDashboard({
             </div>
           ))}
         </div>
+<<<<<<< HEAD
         <Skeleton className="h-64 w-full rounded-2xl" />
+=======
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-3">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-2xl" />
+            ))}
+          </div>
+          <Skeleton className="h-64 w-full rounded-2xl" />
+        </div>
+>>>>>>> 76c074d (Save changes)
       </div>
     );
   }
 
+<<<<<<< HEAD
   return (
     <div className="space-y-8">
       {toast && (
@@ -362,11 +425,55 @@ export default function AdminDashboard({
           className={`fixed top-6 right-6 z-50 px-5 py-3.5 rounded-xl shadow-lg font-semibold text-sm text-white ${toast.isError ? "bg-red-600" : "bg-emerald-600"}`}
         >
           {toast.msg}
+=======
+  const filteredUsers = (data?.recentUsers || []).filter(
+    (u) =>
+      u.email?.toLowerCase().includes(searchUser.toLowerCase()) ||
+      u.displayName?.toLowerCase().includes(searchUser.toLowerCase()),
+  );
+
+  const handleUserAction = (uid, action) => {
+    setActionMsg({ uid, action });
+    setTimeout(() => setActionMsg(null), 3000);
+  };
+
+  const growthData = data?.growth || [
+    { month: "Jan", users: 400 },
+    { month: "Feb", users: 600 },
+    { month: "Mar", users: 800 },
+    { month: "Apr", users: 950 },
+    { month: "May", users: 1100 },
+    { month: "Jun", users: 1350 },
+  ];
+  const maxUsers = Math.max(...growthData.map((d) => d.users));
+
+  const ROLE_BADGE = {
+    admin: "bg-amber-100 text-amber-700",
+    recruiter: "bg-blue-100 text-blue-700",
+    candidate: "bg-indigo-100 text-indigo-700",
+  };
+
+  return (
+    <div className="space-y-8" ref={revealRef}>
+      {/* Toast */}
+      {actionMsg && (
+        <div
+          role="alert"
+          aria-live="polite"
+          className={`fixed top-6 right-6 z-50 px-5 py-3.5 rounded-xl shadow-lg font-semibold text-sm text-white ${actionMsg.action === "ban" ? "bg-red-600" : "bg-emerald-600"}`}
+        >
+          User {actionMsg.action === "ban" ? "banned" : "activated"}{" "}
+          successfully.
+>>>>>>> 76c074d (Save changes)
         </div>
       )}
 
       {/* Admin Banner */}
+<<<<<<< HEAD
       <div className="bg-slate-900 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+=======
+      <div className="reveal bg-slate-900 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+>>>>>>> 76c074d (Save changes)
         <div>
           <div className="flex items-center gap-2 mb-1">
             <ShieldCheck
@@ -388,6 +495,7 @@ export default function AdminDashboard({
         </div>
       </div>
 
+<<<<<<< HEAD
       {stats.fraudPosts > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-5 flex items-start gap-4">
           <AlertTriangle
@@ -437,10 +545,19 @@ export default function AdminDashboard({
             color="text-amber-600"
             bg="bg-amber-50"
           />
+=======
+      {/* Stats */}
+      <section aria-label="Platform stats" className="reveal delay-100">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {stats.map((s) => (
+            <StatCard key={s.label} {...s} />
+          ))}
+>>>>>>> 76c074d (Save changes)
         </div>
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<<<<<<< HEAD
         <div className="lg:col-span-2 space-y-6">
           {/* User Management */}
           <section aria-labelledby="users-heading">
@@ -477,6 +594,121 @@ export default function AdminDashboard({
                       onBan={() => handleBanUser(u.id)}
                       onUnban={() => handleUnbanUser(u.id)}
                     />
+=======
+        {/* Main Column */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* User Management */}
+          <section aria-labelledby="users-heading">
+            <h2
+              id="users-heading"
+              className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-4"
+            >
+              <Users className="w-5 h-5 text-indigo-500" aria-hidden="true" />
+              User Management
+            </h2>
+
+            <div className="relative mb-3">
+              <Search
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                placeholder="Search by name or email..."
+                value={searchUser}
+                onChange={(e) => setSearchUser(e.target.value)}
+                aria-label="Search users"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all"
+              />
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+                <div className="text-sm text-slate-600">
+                  Showing{" "}
+                  <span className="font-semibold text-slate-800">
+                    {filteredUsers.length}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold text-slate-800">
+                    {data?.stats?.totalUsers ?? data?.recentUsers?.length ?? 0}
+                  </span>{" "}
+                  users
+                </div>
+                <Link
+                  href="/admin/users"
+                  className="text-xs text-indigo-600 font-semibold hover:underline"
+                >
+                  View all
+                </Link>
+              </div>
+              {filteredUsers.length > 0 ? (
+                <ul role="list" className="divide-y divide-slate-100">
+                  {filteredUsers.map((u, i) => (
+                    <li
+                      key={i}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${ROLE_BADGE[u.role] || "bg-slate-100 text-slate-500"}`}
+                          aria-hidden="true"
+                        >
+                          {(
+                            u.displayName?.[0] ||
+                            u.email?.[0] ||
+                            "?"
+                          ).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-800 text-sm truncate">
+                            {u.displayName || "Unnamed User"}
+                          </p>
+                          <p className="text-xs text-slate-400 truncate">
+                            {u.email}
+                          </p>
+                          <span
+                            className={`mt-1 inline-block text-xs font-semibold px-2 py-0.5 rounded-md capitalize ${ROLE_BADGE[u.role] || "bg-slate-100 text-slate-600"}`}
+                          >
+                            {u.role}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {u.banned ? (
+                          <button
+                            onClick={() =>
+                              handleUserAction(u.firebaseUid, "activate")
+                            }
+                            disabled={u.role === "admin"}
+                            aria-label={`Activate ${u.displayName || u.email}`}
+                            className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-emerald-500 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            <ShieldCheck
+                              className="w-3.5 h-3.5"
+                              aria-hidden="true"
+                            />{" "}
+                            Activate
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              handleUserAction(u.firebaseUid, "ban")
+                            }
+                            disabled={u.role === "admin"}
+                            aria-label={`Ban ${u.displayName || u.email}`}
+                            className="inline-flex items-center gap-1.5 bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-500 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            <ShieldX
+                              className="w-3.5 h-3.5"
+                              aria-hidden="true"
+                            />{" "}
+                            Ban
+                          </button>
+                        )}
+                      </div>
+                    </li>
+>>>>>>> 76c074d (Save changes)
                   ))}
                 </ul>
               ) : (
@@ -486,7 +718,11 @@ export default function AdminDashboard({
                     aria-hidden="true"
                   />
                   <p className="text-slate-500 text-sm font-medium">
+<<<<<<< HEAD
                     {users.length === 0
+=======
+                    {data?.recentUsers?.length === 0
+>>>>>>> 76c074d (Save changes)
                       ? "No users found."
                       : "No users match your search."}
                   </p>
@@ -495,6 +731,7 @@ export default function AdminDashboard({
             </div>
           </section>
 
+<<<<<<< HEAD
           {/* Recruiter Job Requests */}
           {jobRequests.length > 0 && (
             <section aria-labelledby="requests-heading">
@@ -625,10 +862,59 @@ export default function AdminDashboard({
               </div>
             </section>
           )}
+=======
+          {/* Recent Jobs */}
+          <section aria-labelledby="jobs-heading">
+            <h2
+              id="jobs-heading"
+              className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-4"
+            >
+              <Briefcase className="w-5 h-5 text-blue-500" aria-hidden="true" />
+              Recent Job Posts
+            </h2>
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              {(data?.recentJobs || []).length > 0 ? (
+                <ul role="list" className="divide-y divide-slate-100">
+                  {data.recentJobs.map((job, i) => (
+                    <li
+                      key={i}
+                      className="flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-800 text-sm truncate">
+                          {job.title}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {job.company} · {job.location}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 ml-3">
+                        <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-lg">
+                          Active
+                        </span>
+                        <button
+                          aria-label={`Remove job: ${job.title}`}
+                          className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-400 rounded-lg hover:bg-red-500 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
+                        >
+                          <ShieldX className="w-4 h-4" aria-hidden="true" />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="py-10 text-center">
+                  <p className="text-slate-400 text-sm">No job posts found.</p>
+                </div>
+              )}
+            </div>
+          </section>
+>>>>>>> 76c074d (Save changes)
         </div>
 
         {/* Sidebar */}
         <aside className="space-y-5" aria-label="Admin tools">
+<<<<<<< HEAD
           <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
             <h3 className="font-bold text-slate-900 text-sm">At a Glance</h3>
             {[
@@ -663,6 +949,9 @@ export default function AdminDashboard({
             ))}
           </div>
 
+=======
+          {/* Growth Chart */}
+>>>>>>> 76c074d (Save changes)
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <h3 className="font-bold text-slate-900 mb-5 flex items-center gap-2 text-sm">
               <BarChart2
@@ -676,12 +965,17 @@ export default function AdminDashboard({
               role="img"
               aria-label="Monthly user growth chart"
             >
+<<<<<<< HEAD
               {chartBars.map(({ month, users: u }) => (
+=======
+              {growthData.map(({ month, users }) => (
+>>>>>>> 76c074d (Save changes)
                 <div
                   key={month}
                   className="flex flex-col items-center gap-1 flex-1"
                 >
                   <div
+<<<<<<< HEAD
                     className="w-full rounded-t-lg hover:bg-indigo-600 transition-colors relative group cursor-default border border-indigo-400/40"
                     style={{
                       backgroundColor: "rgb(99 102 241 / 0.95)",
@@ -691,6 +985,14 @@ export default function AdminDashboard({
                   >
                     <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                       {u}
+=======
+                    className="w-full bg-indigo-500 rounded-t-lg hover:bg-indigo-600 transition-colors relative group cursor-default"
+                    style={{ height: `${(users / maxUsers) * 100}%` }}
+                    title={`${month}: ${users} users`}
+                  >
+                    <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                      {users}
+>>>>>>> 76c074d (Save changes)
                     </span>
                   </div>
                   <span className="text-[10px] font-medium text-slate-400">
@@ -701,6 +1003,7 @@ export default function AdminDashboard({
             </div>
           </div>
 
+<<<<<<< HEAD
           <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
             <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
               <Activity
@@ -739,6 +1042,67 @@ export default function AdminDashboard({
                 </div>
               </div>
             ))}
+=======
+          {/* Fraud Alerts */}
+          <div className="bg-amber-50 rounded-2xl border border-amber-200 p-6">
+            <h3 className="font-bold text-amber-900 mb-4 flex items-center gap-2 text-sm">
+              <AlertTriangle
+                className="w-4 h-4 text-amber-500"
+                aria-hidden="true"
+              />
+              Fraud Alerts
+            </h3>
+            <ul role="list" className="space-y-2">
+              {[
+                { msg: "2 duplicate job posts detected", severity: "medium" },
+                { msg: "1 suspicious account flagged", severity: "high" },
+              ].map((alert, i) => (
+                <li
+                  key={i}
+                  className={`flex items-center gap-2.5 p-3 rounded-xl text-xs font-medium text-slate-700 ${alert.severity === "high" ? "bg-red-100" : "bg-amber-100"}`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full shrink-0 ${alert.severity === "high" ? "bg-red-500" : "bg-amber-500"}`}
+                    aria-hidden="true"
+                  />
+                  {alert.msg}
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-amber-600 mt-3">
+              AI-powered detection. Manual review advised.
+            </p>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <h3 className="font-bold text-slate-900 mb-4 text-sm">
+              Quick Actions
+            </h3>
+            <nav aria-label="Admin quick actions">
+              <ul className="space-y-1">
+                {[
+                  { label: "View All Users", href: "/admin/users" },
+                  { label: "Manage Job Posts", href: "/admin/jobs" },
+                  { label: "Platform Reports", href: "/admin/reports" },
+                  { label: "Security Settings", href: "/admin/security" },
+                ].map(({ label, href }) => (
+                  <li key={label}>
+                    <Link
+                      href={href}
+                      className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 group"
+                    >
+                      {label}
+                      <ChevronRight
+                        className="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors"
+                        aria-hidden="true"
+                      />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+>>>>>>> 76c074d (Save changes)
           </div>
         </aside>
       </div>

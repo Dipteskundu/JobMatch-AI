@@ -20,6 +20,7 @@ function getLocalAdminUser() {
 }
 
 export function AuthProvider({ children }) {
+<<<<<<< HEAD
   const [user, setUser] = useState(
     () => auth.currentUser || getLocalAdminUser(),
   );
@@ -92,6 +93,14 @@ export function AuthProvider({ children }) {
         return;
       }
 
+=======
+  const [user, setUser] = useState(null);
+  const [claims, setClaims] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+>>>>>>> 76c074d (Save changes)
       setUser(firebaseUser);
 
       if (firebaseUser) {
@@ -114,6 +123,16 @@ export function AuthProvider({ children }) {
       }
       
       setLoading(false);
+      if (firebaseUser) {
+        try {
+          const idTokenResult = await firebaseUser.getIdTokenResult();
+          setClaims(idTokenResult.claims || null);
+        } catch (e) {
+          setClaims(null);
+        }
+      } else {
+        setClaims(null);
+      }
     });
 
     const onStorage = (event) => {
@@ -177,13 +196,23 @@ export function AuthProvider({ children }) {
     if (auth.currentUser) {
       await auth.currentUser.reload();
       setUser({ ...auth.currentUser });
+      try {
+        const idTokenResult = await auth.currentUser.getIdTokenResult(true);
+        setClaims(idTokenResult.claims || null);
+      } catch (e) {
+        // ignore
+      }
     }
   };
 
   const value = {
     user,
+<<<<<<< HEAD
     dbUser,
     role,
+=======
+    claims,
+>>>>>>> 76c074d (Save changes)
     loading,
     isAuthenticated: !!user,
     logout,

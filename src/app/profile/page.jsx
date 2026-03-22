@@ -29,7 +29,7 @@ import { API_BASE } from "../lib/apiClient";
 import apiClient from "../lib/apiClient";
 
 const Page = () => {
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, loading: authLoading, claims } = useAuth();
   const router = useRouter();
   const apiBase = API_BASE;
 
@@ -84,15 +84,19 @@ const Page = () => {
     );
   }
 
-  const role = profile?.role || "candidate";
+  const role = (claims && claims.role) || profile?.role || "candidate";
   const displayName = profile?.displayName || user?.displayName || "User";
   const title =
+<<<<<<< HEAD
     profile?.title ||
     (role === "recruiter"
       ? "Recruiter"
       : role === "admin"
         ? "Administrator"
         : "Professional");
+=======
+    profile?.title || (role === "recruiter" ? "Recruiter" : "Professional");
+>>>>>>> 76c074d (Save changes)
   const location = profile?.location || "Location not set";
   const bio = profile?.bio || "No professional summary provided yet.";
   const skills = Array.isArray(profile?.skills) ? profile.skills : Skills; // Fallback to CandidateData skills if none in DB
@@ -117,11 +121,14 @@ const Page = () => {
                         size="w-32 h-32"
                         className="border-4 border-white"
                       />
+<<<<<<< HEAD
                       {role === "admin" && (
                         <span className="absolute -bottom-1 -right-1 bg-amber-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full border-2 border-white shadow-sm uppercase tracking-tighter">
                           ADMIN
                         </span>
                       )}
+=======
+>>>>>>> 76c074d (Save changes)
                       {role === "candidate" && (
                         <span className="absolute -bottom-1 -right-1 bg-indigo-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full border-2 border-white shadow-sm uppercase tracking-tighter">
                           PRO
@@ -174,9 +181,13 @@ const Page = () => {
               {/* Right Column: Content */}
               <div className="lg:col-span-2 space-y-12 reveal delay-150">
                 {/* Conditional Content Based on Role */}
+<<<<<<< HEAD
                 {role === "admin" ? (
                   <AdminProfileView profile={profile} />
                 ) : role === "candidate" ? (
+=======
+                {role === "candidate" ? (
+>>>>>>> 76c074d (Save changes)
                   <>
                     {/* Professional Brief */}
                     <section className="bg-white rounded-[2rem] border border-slate-100 premium-shadow p-10 space-y-6">
@@ -216,7 +227,11 @@ const Page = () => {
                     </section>
 
                     {/* Career Path Component */}
+<<<<<<< HEAD
                     {profile?.experience && profile.experience.length > 0 ? (
+=======
+                    {profile.experience && profile.experience.length > 0 ? (
+>>>>>>> 76c074d (Save changes)
                       <section className="pt-4">
                         <div className="flex items-center gap-3 mb-8">
                           <div className="p-2.5 bg-indigo-50 rounded-xl">
@@ -263,7 +278,11 @@ const Page = () => {
                     )}
 
                     {/* Featured Works Component */}
+<<<<<<< HEAD
                     {profile?.projects && profile.projects.length > 0 ? (
+=======
+                    {profile.projects && profile.projects.length > 0 ? (
+>>>>>>> 76c074d (Save changes)
                       <section className="space-y-8">
                         <div className="flex items-center gap-3">
                           <div className="p-2.5 bg-indigo-50 rounded-xl">
@@ -343,7 +362,11 @@ const Page = () => {
                     )}
 
                     {/* Education Section */}
+<<<<<<< HEAD
                     {profile?.education && profile.education.length > 0 ? (
+=======
+                    {profile.education && profile.education.length > 0 ? (
+>>>>>>> 76c074d (Save changes)
                       <section className="space-y-8 bg-white rounded-[2rem] border border-slate-100 premium-shadow p-10">
                         <div className="flex items-center gap-3">
                           <div className="p-2.5 bg-indigo-50 rounded-xl">
