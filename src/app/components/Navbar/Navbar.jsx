@@ -9,6 +9,7 @@ import {
   Bell,
   ChevronDown,
   User,
+  Users,
   Bookmark,
   FileText,
   Settings,
@@ -21,6 +22,7 @@ import {
   Info,
   ChevronRight,
   Zap,
+  Clock,
 } from "lucide-react";
 import { useAuth } from "../../lib/AuthContext";
 import { useTheme } from "../../lib/ThemeContext";
@@ -40,6 +42,7 @@ export default function Navbar() {
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme, mounted } = useTheme();
+  const [profileRoleLabel, setProfileRoleLabel] = useState(null);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -87,6 +90,38 @@ export default function Navbar() {
     return () => clearInterval(interval);
   }, [apiBase, isAuthenticated, user?.uid]);
 
+  // Fetch user profile from backend to determine role/label (Recruiter / Pro member etc.)
+  useEffect(() => {
+    if (!isAuthenticated || !user?.uid) return;
+    let mountedFlag = true;
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(
+          new URL(`/api/auth/profile/${user.uid}`, apiBase).toString(),
+        );
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!json.success || !json.data) return;
+        const profile = json.data;
+        let label = "Member";
+        if (profile.role === "recruiter" || profile.role === "employer") {
+          label = "Recruiter";
+        } else if (profile.isPro) {
+          label = "Pro Member";
+        } else if (profile.role === "admin") {
+          label = "Admin";
+        }
+        if (mountedFlag) setProfileRoleLabel(label);
+      } catch (err) {
+        // ignore profile fetch errors
+      }
+    };
+    fetchProfile();
+    return () => {
+      mountedFlag = false;
+    };
+  }, [apiBase, isAuthenticated, user?.uid]);
+
   const navLinks = [
     { name: "Home", href: "/", icon: Home },
     { name: "Find Jobs", href: "/jobs", icon: Briefcase },
@@ -94,50 +129,89 @@ export default function Navbar() {
     { name: "About Us", href: "/about", icon: Info },
   ];
 
-  const userMenuItems = [
-    {
-      icon: LayoutDashboard,
-      label: "Dashboard",
-      href: "/dashboard",
-      color: "text-indigo-600",
-      bg: "bg-indigo-50",
-    },
-    {
-      icon: User,
-      label: "My Profile",
-      href: "/profile",
-      color: "text-violet-600",
-      bg: "bg-violet-50",
-    },
-    {
-      icon: Settings,
-      label: "Edit Profile",
-      href: "/profile/edit",
-      color: "text-slate-600",
-      bg: "bg-slate-100",
-    },
-    {
-      icon: Bookmark,
-      label: "Saved Jobs",
-      href: "/saved-jobs",
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-    },
-    {
-      icon: FileText,
-      label: "My Applications",
-      href: "/applications",
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-    },
-    {
-      icon: Lightbulb,
-      label: "Skill Gap Detection",
-      href: "/skill-gap-detection",
-      color: "text-orange-600",
-      bg: "bg-orange-50",
-    },
-  ];
+  const userMenuItems =
+    profileRoleLabel === "Recruiter"
+      ? [
+          {
+            icon: LayoutDashboard,
+            label: "Dashboard",
+            href: "/dashboard",
+            color: "text-indigo-600",
+            bg: "bg-indigo-50",
+          },
+          {
+            icon: User,
+            label: "My Profile",
+            href: "/profile",
+            color: "text-violet-600",
+            bg: "bg-violet-50",
+          },
+          {
+            icon: Users,
+            label: "Applicants",
+            href: "/applicants",
+            color: "text-blue-600",
+            bg: "bg-blue-50",
+          },
+          {
+            icon: Briefcase,
+            label: "My Jobs",
+            href: "/my-jobs",
+            color: "text-emerald-600",
+            bg: "bg-emerald-50",
+          },
+          {
+            icon: Clock,
+            label: "Interviews",
+            href: "/interviews",
+            color: "text-amber-600",
+            bg: "bg-amber-50",
+          },
+        ]
+      : [
+          {
+            icon: LayoutDashboard,
+            label: "Dashboard",
+            href: "/dashboard",
+            color: "text-indigo-600",
+            bg: "bg-indigo-50",
+          },
+          {
+            icon: User,
+            label: "My Profile",
+            href: "/profile",
+            color: "text-violet-600",
+            bg: "bg-violet-50",
+          },
+          {
+            icon: Settings,
+            label: "Edit Profile",
+            href: "/profile/edit",
+            color: "text-slate-600",
+            bg: "bg-slate-100",
+          },
+          {
+            icon: Bookmark,
+            label: "Saved Jobs",
+            href: "/saved-jobs",
+            color: "text-amber-600",
+            bg: "bg-amber-50",
+          },
+          {
+            icon: FileText,
+            label: "My Applications",
+            href: "/applications",
+            color: "text-emerald-600",
+            bg: "bg-emerald-50",
+          },
+          {
+            icon: Lightbulb,
+            label: "Skill Gap Detection",
+            href: "/skill-gap-detection",
+            color: "text-orange-600",
+            bg: "bg-orange-50",
+          },
+        ];
 
   const userDisplayName =
     user?.displayName || user?.email?.split("@")[0] || "User";
@@ -145,6 +219,26 @@ export default function Navbar() {
   const closeMobile = (href) => {
     setMobileOpen(false);
     if (href) router.push(href);
+  };
+
+  // Search handling
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const submitSearch = (q) => {
+    const term = (q || searchQuery || "").trim();
+    if (!term) return;
+    // Navigate to jobs page with search param
+    router.push(`/jobs?search=${encodeURIComponent(term)}`);
+    setSearchQuery("");
+    setSearchOpen(false);
+    setMobileOpen(false);
+  };
+
+  const onKeyDownSearch = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      submitSearch();
+    }
   };
 
   return (
@@ -196,6 +290,9 @@ export default function Navbar() {
                       type="text"
                       placeholder="Search jobs or skills..."
                       className="bg-transparent text-[13px] text-slate-700 placeholder-slate-400 outline-none w-full"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={onKeyDownSearch}
                     />
                   </div>
                   <Link
@@ -249,7 +346,9 @@ export default function Navbar() {
                           {userDisplayName}
                         </p>
                         <p className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wide leading-tight">
-                          PRO MEMBER
+                          {profileRoleLabel
+                            ? profileRoleLabel.toUpperCase()
+                            : "PRO MEMBER"}
                         </p>
                       </div>
                       <Avatar
@@ -362,9 +461,16 @@ export default function Navbar() {
                   type="text"
                   placeholder="Search jobs, companies, or skills..."
                   className="bg-transparent text-[14px] text-slate-700 placeholder-slate-400 outline-none w-full"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={onKeyDownSearch}
                 />
                 <button
-                  onClick={() => setSearchOpen(false)}
+                  onClick={() => {
+                    // close or submit depending on whether a query exists
+                    if (searchQuery.trim()) submitSearch(searchQuery);
+                    else setSearchOpen(false);
+                  }}
                   className="text-slate-400 hover:text-slate-700"
                 >
                   <X className="w-4 h-4" />
@@ -428,7 +534,7 @@ export default function Navbar() {
                     {userDisplayName}
                   </p>
                   <p className="text-indigo-200 text-xs font-semibold uppercase tracking-wider">
-                    Pro Member
+                    {profileRoleLabel || "Pro Member"}
                   </p>
                 </div>
               </div>

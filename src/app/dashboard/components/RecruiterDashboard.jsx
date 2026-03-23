@@ -54,6 +54,10 @@ export default function RecruiterDashboard({ user, data, loading }) {
   const [postMsg, setPostMsg] = useState(null);
   const revealRef = useScrollReveal();
 
+  // Debug: Check if user data is available
+  console.log("RecruiterDashboard mounted with user:", user);
+  console.log("User UID available:", !!user?.uid);
+
   useEffect(() => {
     if (!data?.jobs || !rtdb) return;
     const unsubscribes = data.jobs.map((job) => {
@@ -134,19 +138,42 @@ export default function RecruiterDashboard({ user, data, loading }) {
   const handlePostJob = async (e) => {
     e.preventDefault();
     setPosting(true);
+
+    // Debug logging
+    console.log("User data:", user);
+    console.log("User UID:", user?.uid);
+
+    // Check if user UID exists
+    if (!user?.uid) {
+      console.error("No user UID available!");
+      setPostMsg({
+        type: "error",
+        text: "User not authenticated. Please refresh and try again.",
+      });
+      setPosting(false);
+      return;
+    }
+
     try {
+      const jobData = {
+        ...jobForm,
+        skills: jobForm.skills
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+        postedBy: user?.uid, // Add recruiter UID to track ownership
+      };
+
+      console.log("Sending job data:", jobData);
+
       const res = await fetch(`${API_BASE}/api/jobs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...jobForm,
-          skills: jobForm.skills
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean),
-        }),
+        body: JSON.stringify(jobData),
       });
       const result = await res.json();
+      console.log("Job creation result:", result);
+
       if (result.success) {
         setPostMsg({ type: "success", text: "Job posted successfully." });
         setJobForm({
@@ -159,17 +186,25 @@ export default function RecruiterDashboard({ user, data, loading }) {
           skills: "",
         });
         setShowPostJob(false);
+
+        // Refresh dashboard data to update stats
+        window.location.reload();
       } else {
         setPostMsg({
           type: "error",
           text: result.message || "Failed to post job.",
         });
       }
-    } catch {
+    } catch (error) {
+      console.error("Job posting error:", error);
       setPostMsg({ type: "error", text: "Network error. Please try again." });
     }
     setPosting(false);
     setTimeout(() => setPostMsg(null), 4000);
+  };
+
+  const handleContact = (email) => {
+    window.location.href = `mailto:${email}`;
   };
 
   const handleStatusChange = async (appId, newStatus) => {
@@ -226,15 +261,17 @@ export default function RecruiterDashboard({ user, data, loading }) {
             Reach thousands of qualified candidates instantly.
           </p>
         </div>
-        <button
-          onClick={() => setShowPostJob(!showPostJob)}
-          aria-expanded={showPostJob}
-          aria-controls="post-job-form"
-          className="inline-flex items-center gap-2 bg-white text-indigo-700 px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-indigo-50 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-indigo-600 shrink-0"
-        >
-          <Plus className="w-4 h-4" aria-hidden="true" />
-          {showPostJob ? "Cancel" : "Post Job"}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowPostJob(!showPostJob)}
+            aria-expanded={showPostJob}
+            aria-controls="post-job-form"
+            className="inline-flex items-center gap-2 bg-white text-indigo-700 px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-indigo-50 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-indigo-600 shrink-0"
+          >
+            <Plus className="w-4 h-4" aria-hidden="true" />
+            {showPostJob ? "Cancel" : "Post Job"}
+          </button>
+        </div>
       </div>
 
       {/* Post Job Form */}
@@ -398,7 +435,10 @@ export default function RecruiterDashboard({ user, data, loading }) {
                           <option value="rejected">Rejected</option>
                           <option value="selected">Selected</option>
                         </select>
-                        <button className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-indigo-50 hover:text-indigo-600 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                        <button
+                          onClick={() => handleContact(app.email)}
+                          className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-indigo-50 hover:text-indigo-600 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        >
                           <Mail className="w-3.5 h-3.5" aria-hidden="true" />
                           Contact
                         </button>

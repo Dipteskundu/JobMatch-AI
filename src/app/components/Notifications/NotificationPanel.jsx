@@ -12,6 +12,7 @@ import {
   Star,
   Award,
   XCircle,
+  Calendar,
 } from "lucide-react";
 import { ref, onChildAdded } from "firebase/database";
 import { rtdb } from "../../lib/firebaseClient";
@@ -19,6 +20,16 @@ import { API_BASE } from "../../lib/apiClient";
 
 const TYPE_CONFIG = {
   application_viewed: { icon: Eye, color: "text-blue-500", bg: "bg-blue-50" },
+  application_status: {
+    icon: CheckCircle,
+    color: "text-indigo-500",
+    bg: "bg-indigo-50",
+  },
+  interview_scheduled: {
+    icon: Calendar,
+    color: "text-green-500",
+    bg: "bg-green-50",
+  },
   status_shortlisted: {
     icon: Star,
     color: "text-emerald-500",
