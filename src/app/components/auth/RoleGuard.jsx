@@ -13,7 +13,7 @@ export default function RoleGuard({ children, allowedRoles }) {
     if (!loading) {
       if (!isAuthenticated) {
         router.push("/signin");
-      } else if (role && !allowedRoles.includes(role)) {
+      } else if (!role || !allowedRoles.includes(role)) {
         router.push("/unauthorized");
       }
     }
@@ -27,7 +27,7 @@ export default function RoleGuard({ children, allowedRoles }) {
     );
   }
 
-  if (!isAuthenticated || (role && !allowedRoles.includes(role))) {
+  if (!isAuthenticated || !role || !allowedRoles.includes(role)) {
     return null;
   }
 

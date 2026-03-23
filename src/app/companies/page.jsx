@@ -197,30 +197,6 @@ export default function CompaniesPage() {
     }
   };
 
-<<<<<<< HEAD
-  const handleDeleteCompany = async (company) => {
-    if (!isAdmin) return;
-    const confirmed = window.confirm(
-      `Delete company \"${company.name || "Unknown Company"}\"?`,
-    );
-    if (!confirmed) return;
-
-    try {
-      const { data: json } = await apiClient.delete(
-        `/api/v1/companies/${company._id}`,
-      );
-      if (!json.success) throw new Error(json.message || "Failed to delete company");
-      setCompanies((prev) =>
-        prev.filter((c) => (c._id || c.id) !== (company._id || company.id)),
-      );
-      setInfoMessage("Company removed successfully.");
-      setTimeout(() => setInfoMessage(""), 3000);
-    } catch (err) {
-      setError(err.message || "Could not delete company.");
-    }
-  };
-
-=======
   const handleDeleteCompany = async (companyId) => {
     // This function will be invoked by the confirmation modal.
     if (!user) {
@@ -267,7 +243,6 @@ export default function CompaniesPage() {
     setConfirmOpen(false);
   };
 
->>>>>>> 76c074d (Save changes)
   return (
     <div className="min-h-screen bg-[#fdfdfe]">
       <Navbar />
@@ -302,7 +277,7 @@ export default function CompaniesPage() {
               {/* Search */}
               <div className="flex-1 w-full relative">
                 <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl px-5 py-3.5 focus-within:border-indigo-400 transition-all premium-shadow">
-                  <Search className="w-4.5 w-[18px] h-[18px] text-slate-400 shrink-0" />
+                  <Search className="w-4.5 h-4.5 text-slate-400 shrink-0" />
                   <input
                     type="text"
                     placeholder="Search by company name, industry or location…"
@@ -334,7 +309,7 @@ export default function CompaniesPage() {
                   setSelectedIndustry(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="bg-white border border-slate-200 text-sm font-semibold text-slate-700 rounded-2xl px-5 py-3.5 focus:ring-indigo-500 focus:border-indigo-400 cursor-pointer premium-shadow outline-none min-w-[170px]"
+                className="bg-white border border-slate-200 text-sm font-semibold text-slate-700 rounded-2xl px-5 py-3.5 focus:ring-indigo-500 focus:border-indigo-400 cursor-pointer premium-shadow outline-none min-w-42.5"
               >
                 <option value="">All Industries</option>
                 {INDUSTRIES.map((ind) => (
@@ -351,7 +326,7 @@ export default function CompaniesPage() {
                   setSortBy(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="bg-white border border-slate-200 text-sm font-semibold text-slate-700 rounded-2xl px-5 py-3.5 focus:ring-indigo-500 focus:border-indigo-400 cursor-pointer premium-shadow outline-none min-w-[160px]"
+                className="bg-white border border-slate-200 text-sm font-semibold text-slate-700 rounded-2xl px-5 py-3.5 focus:ring-indigo-500 focus:border-indigo-400 cursor-pointer premium-shadow outline-none min-w-40"
               >
                 <option value="default">Sort: Default</option>
                 <option value="rating">Top Rated</option>
@@ -495,12 +470,11 @@ export default function CompaniesPage() {
                           {company.openJobs ?? "—"}
                         </span>
                       </div>
-<<<<<<< HEAD
                       <button
                         type="button"
                         onClick={() =>
                           isAdmin
-                            ? handleDeleteCompany(company)
+                            ? requestDeleteCompany(company)
                             : handleFollow(company)
                         }
                         className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 ${
@@ -520,36 +494,6 @@ export default function CompaniesPage() {
                           <ChevronRight className="w-4 h-4" />
                         )}
                       </button>
-=======
-                      <div className="flex items-center gap-2">
-                        {/* Hide Follow/Sign in for admin users */}
-                        {!(
-                          claims?.role === "admin" ||
-                          user?.role === "admin" ||
-                          (user && user.email === "admin@manager.com")
-                        ) && (
-                          <button
-                            type="button"
-                            onClick={() => handleFollow(company)}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-indigo-600 transition-all active:scale-95"
-                          >
-                            {isAuthenticated ? "Follow" : "Sign in"}{" "}
-                            <ChevronRight className="w-4 h-4" />
-                          </button>
-                        )}
-                        {user &&
-                          (claims?.role === "admin" ||
-                            user?.role === "admin" ||
-                            (user && user.email === "admin@manager.com")) && (
-                            <button
-                              onClick={() => requestDeleteCompany(company)}
-                              className="px-3 py-2 bg-red-50 text-red-700 rounded-xl font-semibold text-sm border border-red-100 hover:bg-red-100"
-                            >
-                              Delete
-                            </button>
-                          )}
-                      </div>
->>>>>>> 76c074d (Save changes)
                     </div>
 
                     {/* Decorative glow */}
@@ -597,7 +541,7 @@ export default function CompaniesPage() {
                 </button>
               </div>
               <div className="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white rounded-full blur-[120px]" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-white rounded-full blur-[120px]" />
               </div>
             </div>
           </PageWrapper>
@@ -615,14 +559,14 @@ export default function CompaniesPage() {
           />
 
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-white rounded-[1.5rem] shadow-2xl border border-slate-100 overflow-hidden">
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
               <div className="p-6 border-b border-slate-50">
                 <h3 className="text-lg font-black text-slate-900">
                   Confirm deletion
                 </h3>
                 <p className="text-sm text-slate-500 mt-2">
-                  Are you sure you want to delete "
-                  {companyToDelete?.name || "this company"}"? This action cannot
+                  Are you sure you want to delete{" "}
+                  {companyToDelete?.name || "this company"}? This action cannot
                   be undone.
                 </p>
               </div>

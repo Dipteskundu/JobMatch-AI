@@ -526,7 +526,7 @@ export default function Home() {
                       <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />
                     ))}
                   </div>
-                  <p className="text-slate-700 text-sm leading-relaxed flex-1">"{t.text}"</p>
+                  <p className="text-slate-700 text-sm leading-relaxed flex-1">&quot;{t.text}&quot;</p>
                   <div className="mt-6 flex items-center gap-3">
                     <div className={`w-9 h-9 rounded-full text-sm font-black flex items-center justify-center ${t.avatarBg}`}>
                       {t.avatar}

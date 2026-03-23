@@ -20,61 +20,15 @@ function getLocalAdminUser() {
 }
 
 export function AuthProvider({ children }) {
-<<<<<<< HEAD
   const [user, setUser] = useState(
     () => auth.currentUser || getLocalAdminUser(),
   );
-  const [dbUser, setDbUser] = useState(null); // Full user from MongoDB
-  const [role, setRole] = useState(null); // "candidate", "recruiter", or "admin"
+  const [dbUser, setDbUser] = useState(null);
+  const [role, setRole] = useState(null);
+  const [claims, setClaims] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const syncLocalAdminFromStorage = () => {
-      const adminUser = getLocalAdminUser();
-      if (adminUser) {
-        setUser(adminUser);
-        setLoading(false);
-        return true;
-      }
-      return false;
-    };
-
-    if (user?.isLocalAdmin) {
-      const onStorage = (event) => {
-        if (event.key !== "localAdminSession") return;
-        if (event.newValue !== "true") {
-          setUser(null);
-        }
-      };
-      const onLocalAdminSessionChanged = () => {
-        if (!syncLocalAdminFromStorage()) {
-          setUser((currentUser) =>
-            currentUser?.isLocalAdmin ? null : currentUser,
-          );
-        }
-      };
-
-      window.addEventListener("storage", onStorage);
-      window.addEventListener(
-        LOCAL_ADMIN_SESSION_EVENT,
-        onLocalAdminSessionChanged,
-      );
-
-      return () => {
-        window.removeEventListener("storage", onStorage);
-        window.removeEventListener(
-          LOCAL_ADMIN_SESSION_EVENT,
-          onLocalAdminSessionChanged,
-        );
-      };
-    }
-
-    // Re-check localStorage on client mount (handles SSR hydration where
-    // localStorage is unavailable during server render).
-    if (syncLocalAdminFromStorage()) {
-      return () => {};
-    }
-
     let resolved = false;
     const timeoutId = setTimeout(() => {
       if (!resolved) setLoading(false);
@@ -83,47 +37,74 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       resolved = true;
       clearTimeout(timeoutId);
-      
+
+      // local admin via localStorage takes precedence for local testing
       const adminUser = getLocalAdminUser();
       if (adminUser) {
         setUser(adminUser);
         setRole("admin");
         setDbUser(adminUser);
+        setClaims(null);
         setLoading(false);
         return;
       }
 
-=======
-  const [user, setUser] = useState(null);
-  const [claims, setClaims] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
->>>>>>> 76c074d (Save changes)
       setUser(firebaseUser);
 
       if (firebaseUser) {
         try {
-          // Fetch profile from backend to get the role
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000'}/api/auth/profile/${firebaseUser.uid}`);
-          if (response.ok) {
-            const result = await response.json();
+          // attempt to fetch profile from backend
+          const apiBase =
+            process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
+          const resp = await fetch(
+            `${apiBase}/api/auth/profile/${firebaseUser.uid}`,
+          );
+          if (resp.ok) {
+            const result = await resp.json();
             if (result.success) {
               setDbUser(result.data);
-              setRole(result.data.role || "candidate");
+              // Only default to candidate if no role exists
+              if (result.data.role) {
+                setRole(result.data.role);
+              } else {
+                // Check if user is likely a recruiter based on email domain or keywords
+                const recruiterDomains = [
+                  "@company.com",
+                  "@recruiter.com",
+                  "@hiring.com",
+                ];
+                const recruiterKeywords = [
+                  "recruiter",
+                  "hiring",
+                  "talent",
+                  "hr",
+                  "staff",
+                ];
+                const emailDomain = firebaseUser.email
+                  ? firebaseUser.email.toLowerCase()
+                  : "";
+
+                const isLikelyRecruiter =
+                  recruiterDomains.some((domain) =>
+                    emailDomain.includes(domain),
+                  ) ||
+                  recruiterKeywords.some(
+                    (keyword) =>
+                      emailDomain.includes(keyword) ||
+                      (firebaseUser.displayName &&
+                        firebaseUser.displayName
+                          .toLowerCase()
+                          .includes(keyword)),
+                  );
+
+                setRole(isLikelyRecruiter ? "recruiter" : "candidate");
+              }
             }
           }
         } catch (err) {
           console.error("AuthContext: Failed to fetch profile", err);
         }
-      } else {
-        setDbUser(null);
-        setRole(null);
-      }
-      
-      setLoading(false);
-      if (firebaseUser) {
+
         try {
           const idTokenResult = await firebaseUser.getIdTokenResult();
           setClaims(idTokenResult.claims || null);
@@ -131,8 +112,12 @@ export function AuthProvider({ children }) {
           setClaims(null);
         }
       } else {
+        setDbUser(null);
+        setRole(null);
         setClaims(null);
       }
+
+      setLoading(false);
     });
 
     const onStorage = (event) => {
@@ -142,11 +127,13 @@ export function AuthProvider({ children }) {
         setUser(adminUser);
         setRole("admin");
         setDbUser(adminUser);
+        setClaims(null);
         setLoading(false);
       } else {
         setUser(auth.currentUser || null);
         setDbUser(null);
         setRole(null);
+        setClaims(null);
       }
     };
 
@@ -156,11 +143,13 @@ export function AuthProvider({ children }) {
         setUser(adminUser);
         setRole("admin");
         setDbUser(adminUser);
+        setClaims(null);
         setLoading(false);
       } else {
         setUser(auth.currentUser || null);
         setDbUser(null);
         setRole(null);
+        setClaims(null);
       }
     };
 
@@ -179,7 +168,7 @@ export function AuthProvider({ children }) {
         onLocalAdminSessionChanged,
       );
     };
-  }, [user?.isLocalAdmin]);
+  }, []);
 
   const logout = async () => {
     if (user?.isLocalAdmin) {
@@ -207,12 +196,9 @@ export function AuthProvider({ children }) {
 
   const value = {
     user,
-<<<<<<< HEAD
     dbUser,
     role,
-=======
     claims,
->>>>>>> 76c074d (Save changes)
     loading,
     isAuthenticated: !!user,
     logout,

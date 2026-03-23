@@ -9,6 +9,7 @@ import {
   Bell,
   ChevronDown,
   User,
+  Users,
   Bookmark,
   FileText,
   Settings,
@@ -21,6 +22,7 @@ import {
   Info,
   ChevronRight,
   Zap,
+  Calendar,
 } from "lucide-react";
 import { useAuth } from "../../lib/AuthContext";
 import { useTheme } from "../../lib/ThemeContext";
@@ -40,16 +42,13 @@ export default function Navbar({ isDashboard = false }) {
   const profileRef = useRef(null);
   const pathname = usePathname();
   const router = useRouter();
-<<<<<<< HEAD
-  const { user, isAuthenticated, role, logout } = useAuth();
-=======
-  const { user, isAuthenticated, logout, claims } = useAuth();
->>>>>>> 76c074d (Save changes)
+  const { user, isAuthenticated, logout, claims, role } = useAuth();
   const { theme, toggleTheme, mounted } = useTheme();
   const [profileRoleLabel, setProfileRoleLabel] = useState(null);
 
   useEffect(() => {
-    setClientMounted(true);
+    const t = setTimeout(() => setClientMounted(true), 0);
+    return () => clearTimeout(t);
   }, []);
 
   // Lock body scroll when mobile menu is open
@@ -80,7 +79,9 @@ export default function Navbar({ isDashboard = false }) {
     if (!isAuthenticated || !user?.uid) return;
     const fetchUnreadCount = async () => {
       try {
-        const { data: json } = await apiClient.get(`/api/notifications/${user.uid}`);
+        const { data: json } = await apiClient.get(
+          `/api/notifications/${user.uid}`,
+        );
         if (json.success && json.data)
           setUnreadCount(json.data.unreadCount || 0);
       } catch (err) {
@@ -97,16 +98,19 @@ export default function Navbar({ isDashboard = false }) {
     if (!isAuthenticated || !user?.uid) return;
     // If token claims indicate admin, prefer that immediately
     if (claims && claims.role === "admin") {
-      setProfileRoleLabel("Admin");
-      return;
+      // defer to avoid sync setState inside effect
+      const tt = setTimeout(() => setProfileRoleLabel("Admin"), 0);
+      return () => clearTimeout(tt);
     }
 
     let mountedFlag = true;
     const fetchProfile = async () => {
       try {
-        const res = await fetch(
-          new URL(`/api/auth/profile/${user.uid}`, apiBase).toString(),
-        );
+        const baseUrl = API_BASE || "";
+        const endpoint = baseUrl
+          ? `${baseUrl.replace(/\/$/, "")}/api/auth/profile/${user.uid}`
+          : `/api/auth/profile/${user.uid}`;
+        const res = await fetch(endpoint);
         if (!res.ok) return;
         const json = await res.json();
         if (!json.success || !json.data) return;
@@ -128,21 +132,36 @@ export default function Navbar({ isDashboard = false }) {
     return () => {
       mountedFlag = false;
     };
-  }, [apiBase, isAuthenticated, user?.uid, claims]);
+  }, [isAuthenticated, user?.uid, claims]);
 
-  const navLinks = [
+  const baseNavLinks = [
     { name: "Home", href: "/", icon: Home },
     { name: "Find Jobs", href: "/jobs", icon: Briefcase },
     { name: "Companies", href: "/companies", icon: Building2 },
     { name: "About Us", href: "/about", icon: Info },
   ];
 
+  const navLinks = (() => {
+    if (isAuthenticated && role === "candidate") {
+      return [
+        ...baseNavLinks.slice(0, 2),
+        {
+          name: "My Applications",
+          href: "/applications",
+          icon: FileText,
+        },
+        ...baseNavLinks.slice(2),
+      ];
+    }
+    return baseNavLinks;
+  })();
+
   const getRoleBasedMenuItems = () => {
     const commonItems = [
       {
         icon: LayoutDashboard,
         label: "Dashboard",
-        href: `/dashboard/${role || 'candidate'}`,
+        href: `/dashboard/${role || "candidate"}`,
         color: "text-indigo-600",
         bg: "bg-indigo-50",
       },
@@ -161,7 +180,7 @@ export default function Navbar({ isDashboard = false }) {
         {
           icon: FileText,
           label: "My Applications",
-          href: "/dashboard/candidate/applications",
+          href: "/applications",
           color: "text-emerald-600",
           bg: "bg-emerald-50",
         },
@@ -186,18 +205,11 @@ export default function Navbar({ isDashboard = false }) {
       return [
         ...commonItems,
         {
-          icon: Briefcase,
-          label: "My Jobs",
-          href: "/dashboard/recruiter/jobs",
-          color: "text-blue-600",
-          bg: "bg-blue-50",
-        },
-        {
-          icon: Users,
-          label: "Applicants",
-          href: "/dashboard/recruiter/applicants",
-          color: "text-emerald-600",
-          bg: "bg-emerald-50",
+          icon: Calendar,
+          label: "Interviews",
+          href: "/dashboard/recruiter/interviews",
+          color: "text-violet-600",
+          bg: "bg-violet-50",
         },
       ];
     }
@@ -467,7 +479,7 @@ export default function Navbar({ isDashboard = false }) {
               <button
                 onClick={toggleTheme}
                 aria-label="Toggle theme"
-                className="hidden md:flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                className="flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
               >
                 {mounted ? (
                   theme === "dark" ? (

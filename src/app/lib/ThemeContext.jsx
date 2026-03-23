@@ -8,14 +8,32 @@ export function ThemeProvider({ children }) {
     const [theme, setTheme] = useState("dark"); // Default to dark mode
     const [mounted, setMounted] = useState(false);
 
+    // Hoist applyTheme so it can be used in effects
+    function applyTheme(newTheme) {
+        const root = document.documentElement;
+
+        // Remove existing theme classes
+        root.classList.remove("light", "dark");
+
+        // Add new theme class
+        root.classList.add(newTheme);
+
+        // Update data attribute for additional styling if needed
+        root.setAttribute("data-theme", newTheme);
+
+        // Force a repaint to ensure styles are applied
+        root.style.colorScheme = newTheme;
+    }
+
     useEffect(() => {
         // Check localStorage first, if not found default to dark mode
         const savedTheme = localStorage.getItem("skillmatch-theme");
         const initialTheme = savedTheme || "dark"; // Default to dark instead of system preference
-        
-        setTheme(initialTheme);
+
+        // Defer React state updates to avoid synchronous setState in effect
         applyTheme(initialTheme);
-        setMounted(true);
+        setTimeout(() => setTheme(initialTheme), 0);
+        setTimeout(() => setMounted(true), 0);
     }, []);
 
     // Apply theme whenever theme state changes
@@ -25,21 +43,7 @@ export function ThemeProvider({ children }) {
         }
     }, [theme, mounted]);
 
-    const applyTheme = (newTheme) => {
-        const root = document.documentElement;
-        
-        // Remove existing theme classes
-        root.classList.remove("light", "dark");
-        
-        // Add new theme class
-        root.classList.add(newTheme);
-        
-        // Update data attribute for additional styling if needed
-        root.setAttribute("data-theme", newTheme);
-        
-        // Force a repaint to ensure styles are applied
-        root.style.colorScheme = newTheme;
-    };
+    // applyTheme is hoisted above
 
     const toggleTheme = () => {
         const newTheme = theme === "light" ? "dark" : "light";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Briefcase,
   Bookmark,
@@ -12,12 +12,16 @@ import {
   ArrowRight,
   Zap,
   BadgeCheck,
+  Calendar,
+  Video,
 } from "lucide-react";
 import Link from "next/link";
 import Skeleton from "../../components/common/Skeleton";
 import ApplicationPulseTracker from "./candidate/ApplicationPulseTracker";
 import GrowthFeedbackCard from "../../components/GrowthFeedback/GrowthFeedbackCard";
 import { useScrollReveal } from "../../lib/useScrollReveal";
+import apiClient from "../../lib/apiClient";
+import { useAuth } from "../../lib/AuthContext";
 
 const STATUS_STYLES = {
   applied: "bg-blue-100 text-blue-700",
@@ -62,7 +66,33 @@ function StatCard({ label, value, icon: Icon, color, bg, href }) {
 
 export default function CandidateDashboard({ data, loading }) {
   const [expandedApps, setExpandedApps] = useState({});
+  const [interviews, setInterviews] = useState([]);
+  const [interviewsLoading, setInterviewsLoading] = useState(true);
+  const { user } = useAuth();
   const revealRef = useScrollReveal();
+
+  // Fetch interviews for candidate
+  useEffect(() => {
+    if (!user?.email) return;
+
+    const fetchInterviews = async () => {
+      try {
+        setInterviewsLoading(true);
+        const { data: response } = await apiClient.get(
+          `/api/interviews/candidate/${encodeURIComponent(user.email)}`,
+        );
+        if (response.success) {
+          setInterviews(response.data || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch interviews:", err);
+      } finally {
+        setInterviewsLoading(false);
+      }
+    };
+
+    fetchInterviews();
+  }, [user?.email]);
 
   if (loading) {
     return (
@@ -391,7 +421,63 @@ export default function CandidateDashboard({ data, loading }) {
           )}
         </div>
 
-        <aside aria-label="Profile insights">
+        <aside aria-label="Profile insights" className="space-y-6">
+          {/* Upcoming Interviews Section */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+              <Video className="w-5 h-5 text-purple-500" />
+              Upcoming Interviews
+            </h3>
+
+            {interviewsLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-16 w-full rounded-xl" />
+                <Skeleton className="h-16 w-full rounded-xl" />
+              </div>
+            ) : interviews.length > 0 ? (
+              <div className="space-y-3">
+                {interviews.slice(0, 3).map((interview) => (
+                  <div
+                    key={interview._id}
+                    className="p-4 bg-purple-50 rounded-xl border border-purple-100"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center shrink-0">
+                        <Calendar className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-slate-800 truncate">
+                          {interview.jobTitle}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {interview.date} at {interview.time}
+                        </p>
+                        {interview.meetingLink && (
+                          <a
+                            href={interview.meetingLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 mt-2 font-medium"
+                          >
+                            Join Meeting <ArrowRight className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <Video className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <p className="text-sm text-slate-500">No upcoming interviews</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Interviews will appear here when scheduled
+                </p>
+              </div>
+            )}
+          </div>
+
           <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
             <h3 className="font-bold text-foreground">Profile Strength</h3>
 
@@ -464,8 +550,8 @@ export default function CandidateDashboard({ data, loading }) {
 
             <div className="pt-4 border-t border-slate-100">
               <p className="text-xs text-muted-foreground leading-relaxed italic">
-                Candidates who keep their profile updated are 30% more likely
-                to be noticed by recruiters.
+                Candidates who keep their profile updated are 30% more likely to
+                be noticed by recruiters.
               </p>
             </div>
           </div>

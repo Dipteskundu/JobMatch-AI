@@ -33,14 +33,9 @@ export default function CommunicationTestPage() {
     if (!loading && !isAuthenticated) router.push("/signin");
   }, [loading, isAuthenticated, router]);
 
-  // Start the test session on mount
-  useEffect(() => {
-    if (!loading && isAuthenticated && user) {
-      startSession();
-    }
-  }, [loading, isAuthenticated, user]); // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Start the test session on mount (moved below startSession declaration)
 
-  const startSession = async () => {
+  async function startSession() {
     setPageStatus("loading");
     try {
       const { data } = await apiClient.post("/api/verification/communication/start", {
@@ -77,6 +72,14 @@ export default function CommunicationTestPage() {
     }
   };
 
+  // Start the test session on mount (defer to avoid sync setState in effect)
+  useEffect(() => {
+    if (!loading && isAuthenticated && user) {
+      const t = setTimeout(() => startSession(), 0);
+      return () => clearTimeout(t);
+    }
+  }, [loading, isAuthenticated, user]);  
+
   const handleSubmit = async () => {
     setPageStatus("submitting");
     const formattedAnswers = Object.entries(answers).map(([questionId, answer]) => ({
@@ -106,12 +109,12 @@ export default function CommunicationTestPage() {
   useEffect(() => {
     if (pageStatus !== "testing") return;
     if (timeLeft <= 0) {
-      handleSubmit();
-      return;
+      const tt = setTimeout(() => handleSubmit(), 0);
+      return () => clearTimeout(tt);
     }
     const id = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(id);
-  }, [pageStatus, timeLeft]); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageStatus, timeLeft]);  
 
   // Anti-cheating tab visibility
   useEffect(() => {

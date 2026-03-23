@@ -186,7 +186,7 @@ export default function JobsPage() {
         if (isAuthenticated && user?.uid) {
           try {
             const dashRes = await fetch(
-              `${apiBase}/api/dashboard/candidate/${user.uid}`,
+              `${process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000"}/api/dashboard/candidate/${user.uid}`,
             );
             if (dashRes.ok) {
               const dashJson = await dashRes.json();
@@ -223,7 +223,7 @@ export default function JobsPage() {
       }
     }
     fetchJobs();
-  }, [apiBase, isAuthenticated, user]);
+  }, [isAuthenticated, user]);
 
   /* ── Auto-Open Modal from Notification Link ───── */
   useEffect(() => {
@@ -396,10 +396,13 @@ export default function JobsPage() {
     }
     try {
       const token = await auth.currentUser.getIdToken();
-      const res = await fetch(`${apiBase}/api/jobs/${jobId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000"}/api/jobs/${jobId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (!res.ok) throw new Error("Delete failed");
       setJobs((prev) => prev.filter((j) => String(j._id) !== String(jobId)));
       setInfoMessage("Job deleted");
@@ -417,24 +420,6 @@ export default function JobsPage() {
       return;
     }
     router.push("/resume");
-  };
-
-  const handleDeleteJob = async (job) => {
-    if (!isAdmin) return;
-    const confirmed = window.confirm(
-      `Delete job \"${job.title || "Untitled"}\" from ${job.company || "Unknown Company"}?`,
-    );
-    if (!confirmed) return;
-
-    try {
-      const { data: json } = await apiClient.delete(`/api/jobs/${job._id}`);
-      if (!json.success) throw new Error(json.message || "Failed to delete job");
-      setJobs((prev) => prev.filter((j) => j._id !== job._id));
-      setInfoMessage("Job removed successfully.");
-      setTimeout(() => setInfoMessage(""), 3000);
-    } catch (err) {
-      setError(err.message || "Could not delete the job.");
-    }
   };
 
   /* ── Sidebar filter panel (shared desktop + mobile) ── */
@@ -807,7 +792,6 @@ export default function JobsPage() {
                           </div>
                           {/* Right */}
                           <div className="flex items-center gap-2 shrink-0">
-<<<<<<< HEAD
                             {isAuthenticated && !isAdmin && (
                               <button
                                 onClick={() => setFitJob(job)}
@@ -817,34 +801,6 @@ export default function JobsPage() {
                                 Check Fit
                               </button>
                             )}
-=======
-                            {isAuthenticated &&
-                              !(
-                                claims?.role === "admin" ||
-                                user?.role === "admin" ||
-                                (user && user.email === "admin@manager.com")
-                              ) && (
-                                <button
-                                  onClick={() => setFitJob(job)}
-                                  className="px-4 py-2.5 border border-indigo-200 text-indigo-600 rounded-xl font-bold text-sm hover:bg-indigo-50 transition-all text-xs"
-                                  title="See how well you match this job"
-                                >
-                                  Check Fit
-                                </button>
-                              )}
-                            {user &&
-                              (claims?.role === "admin" ||
-                                user?.role === "admin" ||
-                                (user &&
-                                  user.email === "admin@manager.com")) && (
-                                <button
-                                  onClick={() => handleDeleteJob(job._id)}
-                                  className="ml-2 px-3 py-2 bg-red-50 text-red-700 rounded-xl font-semibold text-sm border border-red-100 hover:bg-red-100"
-                                >
-                                  Delete
-                                </button>
-                              )}
->>>>>>> 76c074d (Save changes)
                             {appliedJobIds &&
                             appliedJobIds.has(String(job._id)) ? (
                               <button
@@ -854,27 +810,21 @@ export default function JobsPage() {
                                 Applied
                               </button>
                             ) : (
-                              // Hide Apply button for admin users
-                              !(
-                                claims?.role === "admin" ||
-                                user?.role === "admin" ||
-                                (user && user.email === "admin@manager.com")
-                              ) && (
-                                <button
-                                  onClick={() => handleApply(job)}
-                                  className="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-indigo-600 transition-all active:scale-95"
-                                >
-                                  Apply Now
-                                </button>
-                              )
+                              <button
+                                onClick={() => handleApply(job)}
+                                className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              >
+                                Apply Now
+                              </button>
                             )}
-                            <button
-                              onClick={() => handleSave(job)}
-                              className="p-2.5 border border-slate-100 rounded-xl hover:bg-amber-50 hover:border-amber-200 transition-colors group/star"
-                              aria-label="Save job"
-                            >
-                              <Star className="w-4.5 w-[18px] h-[18px] text-slate-300 group-hover/star:text-amber-400 transition-colors" />
-                            </button>
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleDeleteJob(job._id)}
+                                className="ml-2 px-3 py-2 bg-red-50 text-red-700 rounded-xl font-semibold text-sm border border-red-100 hover:bg-red-100"
+                              >
+                                Delete
+                              </button>
+                            )}
                           </div>
                         </div>
 

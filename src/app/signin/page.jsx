@@ -59,14 +59,41 @@ export default function SignInPage() {
       let existingRole;
       try {
         const { data: profileData } = await apiClient.get(
-          `/api/auth/profile/${user.uid}`
+          `/api/auth/profile/${user.uid}`,
         );
         existingRole = profileData?.data?.role;
       } catch (err) {
         if (err.message !== "User not found") {
-           console.warn("Could not fetch existing profile:", err);
+          console.warn("Could not fetch existing profile:", err);
         }
       }
+
+      // If no existing role, check if user is a recruiter by email domain or common recruiter patterns
+      const recruiterDomains = [
+        "@company.com",
+        "@recruiter.com",
+        "@hiring.com",
+      ];
+      const recruiterKeywords = [
+        "recruiter",
+        "hiring",
+        "talent",
+        "hr",
+        "staff",
+      ];
+      const emailDomain = user.email ? user.email.toLowerCase() : "";
+
+      const isLikelyRecruiter =
+        recruiterDomains.some((domain) => emailDomain.includes(domain)) ||
+        recruiterKeywords.some(
+          (keyword) =>
+            emailDomain.includes(keyword) ||
+            (user.displayName &&
+              user.displayName.toLowerCase().includes(keyword)),
+        );
+
+      const userRole =
+        existingRole || (isLikelyRecruiter ? "recruiter" : "candidate");
 
       const { data: syncData } = await apiClient.post("/api/auth/sync-user", {
         uid: user.uid,
@@ -74,7 +101,7 @@ export default function SignInPage() {
         displayName: user.displayName,
         provider: user.providerData?.[0]?.providerId,
         photoURL: user.photoURL,
-        ...(existingRole ? { role: existingRole } : {}),
+        role: userRole,
       });
       return syncData;
     } catch (err) {
@@ -107,8 +134,8 @@ export default function SignInPage() {
 
       const cred = await signInWithEmailAndPassword(auth, email, password);
       const syncResult = await syncUserWithBackend(cred.user);
-      const role = syncResult?.data?.role || "candidate";
-      
+      const role = syncResult?.role || syncResult?.data?.role || "candidate";
+
       sessionStorage.setItem("showWelcome", "1");
       router.push(`/dashboard/${role}`);
     } catch (err) {
@@ -153,7 +180,7 @@ export default function SignInPage() {
     try {
       const cred = await signInWithPopup(auth, googleProvider);
       const syncResult = await syncUserWithBackend(cred.user);
-      const role = syncResult?.data?.role || "candidate";
+      const role = syncResult?.role || syncResult?.data?.role || "candidate";
 
       sessionStorage.setItem("showWelcome", "1");
       router.push(`/dashboard/${role}`);

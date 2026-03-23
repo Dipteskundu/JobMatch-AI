@@ -3,11 +3,8 @@
 import { useState, useEffect } from "react";
 import { X, CheckCircle, ArrowRight, XCircle, Zap, Target } from "lucide-react";
 import { API_BASE } from "../../lib/apiClient";
-<<<<<<< HEAD
 import apiClient from "../../lib/apiClient";
-=======
 import { useAuth } from "../../lib/AuthContext";
->>>>>>> 76c074d (Save changes)
 
 // ── Score Ring (CSS-only circular progress) ──────────────────
 function ScoreRing({ score }) {
@@ -110,51 +107,37 @@ export default function FitMapModal({ job, uid, onClose, onApply }) {
   useEffect(() => {
     if (!job?._id || !uid) return;
 
-<<<<<<< HEAD
-        async function fetchFit() {
-            setLoading(true);
-            setError(null);
-            try {
-                const { data: json } = await apiClient.get(`/api/jobs/${job._id}/fit?uid=${uid}`);
-                if (json.success) {
-                    setFitData(json.data);
-                } else {
-                    setError("Could not calculate fit score.");
-                }
-            } catch {
-                setError("Could not connect to server.");
-            } finally {
-                setLoading(false);
-            }
-=======
     async function fetchFit() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(
-          `${apiBase}/api/jobs/${job._id}/fit?uid=${uid}`,
-        );
+        // Prefer internal apiClient but fall back to direct fetch if needed
+        try {
+          const { data: json } = await apiClient.get(`/api/jobs/${job._id}/fit?uid=${uid}`);
+          if (json && json.success) {
+            setFitData(json.data);
+            return;
+          }
+        } catch (e) {
+          // fallback
+        }
+
+        const res = await fetch(`${apiBase}/api/jobs/${job._id}/fit?uid=${uid}`);
         const json = await res.json();
-        if (json.success) {
+        if (json && json.success) {
           setFitData(json.data);
         } else {
           setError("Could not calculate fit score.");
->>>>>>> 76c074d (Save changes)
         }
-      } catch {
+      } catch (err) {
         setError("Could not connect to server.");
       } finally {
         setLoading(false);
       }
     }
 
-<<<<<<< HEAD
-        fetchFit();
-    }, [job?._id, uid]);
-=======
     fetchFit();
   }, [job?._id, uid, apiBase]);
->>>>>>> 76c074d (Save changes)
 
   const scoreColor =
     fitData?.matchScore >= 75

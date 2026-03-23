@@ -32,34 +32,10 @@ export default function SkillTestPage() {
     // Result
     const [resultData, setResultData] = useState(null); // { score, result, feedback, ... }
 
-    const fetchProfile = async () => {
-        try {
-            const { data } = await apiClient.get(`/api/auth/profile/${user.uid}`);
-            if (data.success) {
-                const p = data.data;
-                setProfile(p);
-                checkTestingEligibility(p);
-            } else {
-                setErrorMsg("Failed to load profile.");
-                setPageStatus("error");
-            }
-        } catch (err) {
-            console.error(err);
-            setErrorMsg("Error fetching profile.");
-            setPageStatus("error");
-        }
-    };
 
-    // Fetch Profile
-    useEffect(() => {
-        if (!loading && !isAuthenticated) {
-            router.push("/signin");
-        } else if (!loading && isAuthenticated) {
-            fetchProfile();
-        }
-    }, [loading, isAuthenticated, router]); // eslint-disable-next-line react-hooks/exhaustive-deps
+    
 
-    const checkTestingEligibility = (p) => {
+    function checkTestingEligibility(p) {
         // Did they fail recently? Check cooldown
         if (p.nextAttemptTime) {
             const nextTime = new Date(p.nextAttemptTime);
@@ -92,7 +68,37 @@ export default function SkillTestPage() {
 
         setUnverifiedSkills(pending);
         setPageStatus("selection");
+    }
+
+    const fetchProfile = async () => {
+        try {
+            const { data } = await apiClient.get(`/api/auth/profile/${user.uid}`);
+            if (data.success) {
+                const p = data.data;
+                setProfile(p);
+                checkTestingEligibility(p);
+            } else {
+                setErrorMsg("Failed to load profile.");
+                setPageStatus("error");
+            }
+        } catch (err) {
+            console.error(err);
+            setErrorMsg("Error fetching profile.");
+            setPageStatus("error");
+        }
     };
+
+    // Fetch Profile
+    useEffect(() => {
+        if (!loading && !isAuthenticated) {
+                router.push("/signin");
+            } else if (!loading && isAuthenticated) {
+                const t = setTimeout(() => fetchProfile(), 0);
+                return () => clearTimeout(t);
+            }
+    }, [loading, isAuthenticated, router]);  
+
+    
 
     const startTestGeneration = async () => {
         if (selectedSkills.length === 0) return;
@@ -159,11 +165,12 @@ export default function SkillTestPage() {
                 setTimeLeft(prev => prev - 1);
             }, 1000);
         } else if (pageStatus === "testing" && timeLeft <= 0) {
-            // Auto submit when time is up
-            handleSubmitTest();
+            // Auto submit when time is up (deferred to avoid sync setState in effect)
+            const tt = setTimeout(() => handleSubmitTest(), 0);
+            return () => clearTimeout(tt);
         }
         return () => clearInterval(interval);
-    }, [pageStatus, timeLeft]); // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pageStatus, timeLeft]);  
 
     // Anti-cheating: Tab visibility
     useEffect(() => {
