@@ -29,17 +29,47 @@ export default function DashboardLayout({ children }) {
 
   useEffect(() => {
     if (!user?.uid) return;
+    let intervalId = null;
+    let cancelled = false;
+    let hadSuccess = false;
+    let failures = 0;
+
     const fetchUnread = async () => {
       try {
         const res = await fetch(`/api/notifications/${user.uid}`);
         if (!res.ok) return;
         const json = await res.json();
         if (json.success && json.data) setUnreadCount(json.data.unreadCount || 0);
+        hadSuccess = true;
+        failures = 0;
       } catch { /* ignore */ }
     };
-    fetchUnread();
-    const interval = setInterval(fetchUnread, 30000);
-    return () => clearInterval(interval);
+
+    const startPolling = () => {
+      if (intervalId) return;
+      intervalId = setInterval(fetchUnread, 30000);
+    };
+
+    const run = async () => {
+      await fetchUnread().catch(() => {});
+      if (cancelled) return;
+      if (hadSuccess) {
+        startPolling();
+        return;
+      }
+
+      // Backend may be offline (common in dev). Avoid spamming proxy errors.
+      failures += 1;
+      if (failures <= 3) {
+        setTimeout(run, 60000);
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [user?.uid]);
 
   const role = contextRole || "candidate";

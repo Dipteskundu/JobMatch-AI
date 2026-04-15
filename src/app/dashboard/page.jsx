@@ -10,7 +10,7 @@ import RecruiterDashboard from "./components/RecruiterDashboard";
 import AdminDashboard from "./components/AdminDashboard";
 import DashboardSidebar from "./components/DashboardSidebar";
 import NotificationPanel from "../components/Notifications/NotificationPanel";
-import api, { API_BASE } from "../lib/apiClient";
+import api from "../lib/apiClient";
 import { useTheme } from "../lib/ThemeContext";
 
 const ROLE_CONFIG = {
@@ -75,16 +75,44 @@ export default function Dashboard() {
 
     useEffect(() => {
         if (!user?.uid) return;
+        let intervalId = null;
+        let cancelled = false;
+        let hadSuccess = false;
+        let failures = 0;
+
         const fetchUnread = async () => {
             try {
                 const res = await api.get(`/api/notifications/${user.uid}`);
                 const json = res.data;
                 if (json.success && json.data) setUnreadCount(json.data.unreadCount || 0);
+                hadSuccess = true;
+                failures = 0;
             } catch { /* ignore */ }
         };
-        fetchUnread();
-        const interval = setInterval(fetchUnread, 30000);
-        return () => clearInterval(interval);
+
+        const startPolling = () => {
+          if (intervalId) return;
+          intervalId = setInterval(fetchUnread, 30000);
+        };
+
+        const run = async () => {
+          await fetchUnread().catch(() => {});
+          if (cancelled) return;
+          if (hadSuccess) {
+            startPolling();
+            return;
+          }
+          failures += 1;
+          if (failures <= 3) {
+            setTimeout(run, 60000);
+          }
+        };
+
+        run();
+        return () => {
+          cancelled = true;
+          if (intervalId) clearInterval(intervalId);
+        };
     }, [user?.uid]);
 
     if (!isAuthenticated) {

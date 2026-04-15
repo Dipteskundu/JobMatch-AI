@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { ref, onChildAdded } from "firebase/database";
 import { rtdb } from "../../lib/firebaseClient";
-import api, { API_BASE } from "../../lib/apiClient";
+import api from "../../lib/apiClient";
 import { safeError } from "../../lib/logger";
 
 const TYPE_CONFIG = {
@@ -99,8 +99,6 @@ export default function NotificationPanel({
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const apiBase = API_BASE;
-
   // Derive unreadCount directly during render, no effect needed
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -120,7 +118,10 @@ export default function NotificationPanel({
           }
         }
       })
-      .catch((err) => safeError("Failed to fetch notifications", err))
+      .catch((err) => {
+        // Avoid repeated noisy logs when the backend is offline in dev.
+        safeError("Failed to fetch notifications", err);
+      })
       .finally(() => {
         if (mounted) setLoading(false);
       });
@@ -162,7 +163,7 @@ export default function NotificationPanel({
       mounted = false;
       if (typeof unsubscribe === "function") unsubscribe();
     };
-  }, [uid, apiBase, setParentUnreadCount]);
+  }, [uid, setParentUnreadCount]);
 
   async function handleNotificationClick(notif) {
     const id = notif._id || notif.id;

@@ -17,7 +17,9 @@ export const API_BASE = rawBase.endsWith("/") ? rawBase.slice(0, -1) : rawBase;
  */
 const baseURL =
   typeof window === "undefined"
-    ? API_BASE          // server-side: direct call
+    ? (typeof process !== "undefined" && process.env.VERCEL && !process.env.NEXT_PUBLIC_API_BASE_URL
+        ? "http://SERVER_CONFIG_REQUIRED" // Fail fast with a clear error if misconfigured on Vercel
+        : API_BASE)
     : "";               // client-side: relative → Next.js proxy handles it
 
 const api = axios.create({

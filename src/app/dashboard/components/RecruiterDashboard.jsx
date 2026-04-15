@@ -76,7 +76,7 @@ export default function RecruiterDashboard({ user, data, loading }) {
       });
     });
     return () => unsubscribes.forEach((u) => u());
-  }, [data?.jobs, rtdb]);
+  }, [data?.jobs]);
 
   if (loading) {
     return (

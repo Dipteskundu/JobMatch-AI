@@ -9,6 +9,7 @@ import {
   ChevronLeft, ChevronRight, Calendar as CalIcon,
   Video, Phone, MapPin, Clock, Building, X, ExternalLink,
 } from "lucide-react";
+import { useTheme } from "../../lib/ThemeContext";
 
 const localizer = dateFnsLocalizer({
   format,
@@ -19,10 +20,10 @@ const localizer = dateFnsLocalizer({
 });
 
 const STATUS_COLORS = {
-  scheduled:  { bg: "#6366f1", light: "#eef2ff", text: "#4338ca" },
-  completed:  { bg: "#10b981", light: "#ecfdf5", text: "#065f46" },
-  cancelled:  { bg: "#ef4444", light: "#fef2f2", text: "#991b1b" },
-  live:       { bg: "#f59e0b", light: "#fffbeb", text: "#92400e" },
+  scheduled:  { bg: "#6366f1", light: "#eef2ff", text: "#4338ca", surfaceDark: "rgba(99,102,241,0.18)", textDark: "#c7d2fe" },
+  completed:  { bg: "#10b981", light: "#ecfdf5", text: "#065f46", surfaceDark: "rgba(16,185,129,0.16)", textDark: "#6ee7b7" },
+  cancelled:  { bg: "#ef4444", light: "#fef2f2", text: "#991b1b", surfaceDark: "rgba(239,68,68,0.16)", textDark: "#fecaca" },
+  live:       { bg: "#f59e0b", light: "#fffbeb", text: "#92400e", surfaceDark: "rgba(245,158,11,0.16)", textDark: "#fde68a" },
 };
 
 const TYPE_ICON = { video: Video, phone: Phone, "in-person": MapPin };
@@ -163,6 +164,8 @@ export default function InterviewCalendar({ interviews = [], role = "recruiter" 
 }
 
 function EventModal({ interview, role, onClose }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const colors = STATUS_COLORS[interview.status] || STATUS_COLORS.scheduled;
   const Icon = TYPE_ICON[interview.type] || Video;
   const date = new Date((interview.scheduledDateTime || interview.scheduledAt)?.$date || interview.scheduledDateTime || interview.scheduledAt);
@@ -177,15 +180,15 @@ function EventModal({ interview, role, onClose }) {
         <div className="p-5 border-b border-slate-100 flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-              style={{ backgroundColor: colors.light }}>
-              <Icon className="w-5 h-5" style={{ color: colors.text }} />
+              style={{ backgroundColor: isDark ? colors.surfaceDark : colors.light }}>
+              <Icon className="w-5 h-5" style={{ color: isDark ? colors.textDark : colors.text }} />
             </div>
             <div>
               <h3 className="font-black text-slate-900 text-base leading-tight">
                 {interview.jobTitle || "Interview"}
               </h3>
               <span className="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide"
-                style={{ backgroundColor: colors.light, color: colors.text }}>
+                style={{ backgroundColor: isDark ? colors.surfaceDark : colors.light, color: isDark ? colors.textDark : colors.text }}>
                 {interview.status}
               </span>
             </div>

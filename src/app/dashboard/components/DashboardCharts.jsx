@@ -9,14 +9,14 @@ import {
 // ── Shared tooltip style ──────────────────────────────────────────────────────
 const TooltipStyle = {
   contentStyle: {
-    background: "#fff",
-    border: "1px solid #e2e8f0",
+    background: "var(--card)",
+    border: "1px solid var(--border)",
     borderRadius: "12px",
     fontSize: "12px",
     fontWeight: 600,
-    boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+    boxShadow: "0 8px 28px rgba(0,0,0,0.25)",
   },
-  cursor: { fill: "rgba(99,102,241,0.06)" },
+  cursor: { fill: "rgba(129,140,248,0.12)" },
 };
 
 // ── Candidate: Application Status Donut ──────────────────────────────────────
@@ -60,7 +60,7 @@ export function ProfileCompletionChart({ completion }) {
         <ResponsiveContainer width="100%" height={160}>
           <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%"
             startAngle={90} endAngle={-270} data={data} barSize={14}>
-            <RadialBar dataKey="value" cornerRadius={8} background={{ fill: "#f1f5f9" }} />
+            <RadialBar dataKey="value" cornerRadius={8} background={{ fill: "var(--secondary)" }} />
           </RadialBarChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -88,9 +88,9 @@ export function RecruiterPipelineChart({ stats }) {
     <ChartCard title="Hiring Pipeline">
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={data} barSize={28} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-          <XAxis dataKey="stage" tick={{ fontSize: 10, fontWeight: 700, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+          <XAxis dataKey="stage" tick={{ fontSize: 10, fontWeight: 700, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
           <Tooltip {...TooltipStyle} />
           <Bar dataKey="count" name="Candidates" radius={[6, 6, 0, 0]}>
             {data.map((_, i) => (
@@ -116,9 +116,9 @@ export function RecruiterJobsChart({ jobs = [] }) {
     <ChartCard title="Applicants per Job">
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={data} barSize={22} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-          <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 700, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+          <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 700, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
           <Tooltip {...TooltipStyle} />
           <Bar dataKey="applicants" name="Applicants" fill="#6366f1" radius={[6, 6, 0, 0]} />
         </BarChart>
@@ -145,9 +145,9 @@ export function AdminGrowthChart({ growth = [] }) {
               <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-          <XAxis dataKey="month" tick={{ fontSize: 10, fontWeight: 700, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+          <XAxis dataKey="month" tick={{ fontSize: 10, fontWeight: 700, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
           <Tooltip {...TooltipStyle} />
           <Area type="monotone" dataKey="users" name="Users" stroke="#6366f1" strokeWidth={2.5}
             fill="url(#userGrad)" dot={{ r: 3, fill: "#6366f1", strokeWidth: 0 }} />

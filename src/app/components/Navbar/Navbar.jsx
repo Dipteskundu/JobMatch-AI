@@ -30,7 +30,7 @@ import { useAuth } from "../../lib/AuthContext";
 import { useTheme } from "../../lib/ThemeContext";
 import Avatar from "../common/Avatar";
 import NotificationPanel from "../Notifications/NotificationPanel";
-import api, { API_BASE } from "../../lib/apiClient";
+import api from "../../lib/apiClient";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -70,23 +70,52 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const apiBase = API_BASE;
-
   useEffect(() => {
     if (!isAuthenticated || !user?.uid) return;
+    let intervalId = null;
+    let cancelled = false;
+    let hadSuccess = false;
+    let failures = 0;
+
     const fetchUnreadCount = async () => {
       try {
         const res = await api.get(`/api/notifications/${user.uid}`);
         const json = res.data;
         if (json.success && json.data)
           setUnreadCount(json.data.unreadCount || 0);
+        hadSuccess = true;
+        failures = 0;
       } catch (err) {
-        console.error("Error fetching notifications:", err);
+        failures += 1;
+        // Avoid noisy terminal logs when the backend isn't running locally.
+        if (failures === 1 && process.env.NODE_ENV !== "production") {
+          console.warn("Backend unreachable for notifications (dev):", err?.message || err);
+        }
       }
     };
-    fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000);
-    return () => clearInterval(interval);
+
+    const startPolling = () => {
+      if (intervalId) return;
+      intervalId = setInterval(fetchUnreadCount, 30000);
+    };
+
+    const run = async () => {
+      await fetchUnreadCount().catch(() => {});
+      if (cancelled) return;
+      if (hadSuccess) {
+        startPolling();
+        return;
+      }
+      if (failures <= 3) {
+        setTimeout(run, 60000);
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [isAuthenticated, user?.uid]);
 
   let profileRoleLabel = "Candidate";
@@ -308,6 +337,23 @@ export default function Navbar() {
                     )}
                   </button>
 
+                  <button
+                    type="button"
+                    onClick={toggleTheme}
+                    className="hidden md:flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                    aria-label="Toggle theme"
+                  >
+                    {mounted ? (
+                      theme === "dark" ? (
+                        <Sun className="w-[18px] h-[18px]" />
+                      ) : (
+                        <Moon className="w-[18px] h-[18px]" />
+                      )
+                    ) : (
+                      <Sun className="w-[18px] h-[18px]" />
+                    )}
+                  </button>
+
                   {/* Desktop Profile Dropdown */}
                   <div className="relative hidden md:block" ref={profileRef}>
                     <button
@@ -401,18 +447,7 @@ export default function Navbar() {
                   </span>
                 )}
               </button>
-              {/* Theme Toggle */}
-              <button
-                onClick={toggleTheme}
-                aria-label="Toggle theme"
-                className="hidden md:flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-              >
-                {mounted ? (
-                  theme === "dark"
-                    ? <Moon className="w-5 h-5" />
-                    : <Sun className="w-5 h-5" />
-                ) : <Sun className="w-5 h-5" />}
-              </button>
+
             </div>
           </div>
         </div>
@@ -545,6 +580,26 @@ export default function Navbar() {
                 className="bg-transparent text-sm text-slate-700 placeholder-slate-400 outline-none w-full"
               />
             </div>
+          </div>
+
+          <div className="px-4 mt-4">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-slate-700 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors"
+              aria-label="Toggle theme"
+            >
+              {mounted ? (
+                theme === "dark" ? (
+                  <Sun className="w-4 h-4" />
+                ) : (
+                  <Moon className="w-4 h-4" />
+                )
+              ) : (
+                <Sun className="w-4 h-4" />
+              )}
+              <span>{mounted && theme === "dark" ? "Light mode" : "Dark mode"}</span>
+            </button>
           </div>
 
           {/* Navigation Links */}

@@ -6,12 +6,10 @@ import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Clock, Send, ShieldAlert, CheckCircle2, MessageCircle } from "lucide-react";
-import { API_BASE } from "../../lib/apiClient";
 
 export default function CommunicationTestPage() {
   const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
-  const apiBase = API_BASE;
 
   const [pageStatus, setPageStatus] = useState("loading"); // loading, testing, submitting, result, error, verified
   const [sessionId, setSessionId] = useState(null);
@@ -70,7 +68,7 @@ export default function CommunicationTestPage() {
       setErrorMsg("Network error. Please reload and try again.");
       setPageStatus("error");
     }
-  }, [apiBase, user]);
+  }, [user]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -111,7 +109,7 @@ export default function CommunicationTestPage() {
       setErrorMsg("Network error while submitting.");
       setPageStatus("error");
     }
-  }, [answers, apiBase, sessionId]);
+  }, [answers, sessionId]);
 
   const handleSubmitRef = useRef(handleSubmit);
   useEffect(() => {
