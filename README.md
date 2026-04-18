@@ -1,6 +1,6 @@
 ﻿<div align="center">
 
-# 🎯 JobMatch-AI
+# 🎯 SkillMatch-AI
 
 ### AI‑powered hiring & job‑matching platform — from profile to interview, end‑to‑end.
 
@@ -28,10 +28,14 @@
 
 ---
 
+##Live Link: https://skillmatchai-phi.vercel.app
+
+---
+
 <a id="overview"></a>
 ## 📌 Overview
 
-**JobMatch AI** is a full‑stack, AI‑assisted hiring platform that connects **candidates**, **recruiters**, and **admins** through a structured hiring pipeline.
+**SkillMatch AI** is a full‑stack, AI‑assisted hiring platform that connects **candidates**, **recruiters**, and **admins** through a structured hiring pipeline.
 
 It helps solve common hiring pain points:
 - Candidates struggle to understand **what skills to improve** and **why a job is a good match**
