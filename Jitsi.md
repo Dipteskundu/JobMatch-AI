@@ -1,6 +1,6 @@
 ﻿# 🎥 Jitsi Interviews — Scheduling, Links, and Joining (How It Works)
 
-This document explains how **JobMatch AI** schedules and manages video interviews using **Jitsi Meet**, how meeting links are generated, how both recruiter and candidate join the **same room**, and why Jitsi is used in this project.
+This document explains how **SkillMatch AI** schedules and manages video interviews using **Jitsi Meet**, how meeting links are generated, how both recruiter and candidate join the **same room**, and why Jitsi is used in this project.
 
 ---
 
@@ -21,7 +21,7 @@ This document explains how **JobMatch AI** schedules and manages video interview
 
 ## 🎯 What this feature does
 
-JobMatch AI supports a complete interview workflow:
+SkillMatch AI supports a complete interview workflow:
 - Recruiter schedules an interview for a candidate
 - Backend creates a **single Jitsi room** and **single meeting link**
 - Interview is stored in MongoDB (`interviews`)
@@ -55,7 +55,7 @@ https://meet.jit.si/<roomName>
 ```
 
 ### How room names are generated
-Backend utility (see `JobMatch-AI-Server/controllers/interviews.controller.js`) creates:
+Backend utility (see `SkillMatch-AI-Server/controllers/interviews.controller.js`) creates:
 - `skillmatch-<jobId>-<applicationId>-<timestamp>-<random>`
 
 This makes collisions extremely unlikely and prevents “guessable” room names.
@@ -75,7 +75,7 @@ UI entry points:
 - Recruiter pipeline pages (commonly **Shortlisted** stage)
 
 Frontend component:
-- `JobMatch-AI/src/app/components/InterviewScheduler/InterviewScheduler.jsx`
+- `SkillMatch-AI/src/app/components/InterviewScheduler/InterviewScheduler.jsx`
 
 When recruiter submits the form:
 - Frontend calls: `POST /api/interviews/schedule`
@@ -95,7 +95,7 @@ Backend behavior (high-level):
 
 ### 2) Manage scheduled interviews
 Recruiter list page:
-- `JobMatch-AI/src/app/(dashboard)/interviews/page.jsx`
+- `SkillMatch-AI/src/app/(dashboard)/interviews/page.jsx`
 
 Capabilities:
 - List interviews
@@ -117,7 +117,7 @@ Join page behavior:
 
 ### 1) View interviews
 Candidate interviews page:
-- `JobMatch-AI/src/app/(dashboard)/my-interviews/page.jsx`
+- `SkillMatch-AI/src/app/(dashboard)/my-interviews/page.jsx`
 
 This page:
 - calls `GET /api/interviews/candidate`
@@ -139,7 +139,7 @@ Result: candidate and recruiter land in the **same Jitsi room**.
 ## 🔌 APIs used (backend)
 
 Router:
-- `JobMatch-AI-Server/routes/interviews.routes.js`
+- `SkillMatch-AI-Server/routes/interviews.routes.js`
 
 Key endpoints:
 
@@ -176,7 +176,7 @@ Common fields:
 - `status`: `"scheduled" | "live" | "completed" | "cancelled" | "rescheduled" | ...`
 
 Reference file:
-- `JobMatch-AI-Server/models/Interview.js` (schema reference / documentation)
+- `SkillMatch-AI-Server/models/Interview.js` (schema reference / documentation)
 
 ---
 
@@ -199,7 +199,7 @@ The join pages fetch interview details first and show an “Unauthorized” erro
 ## 🧩 Optional: embedded Jitsi component
 
 There is a reusable Jitsi embed component:
-- `JobMatch-AI/src/app/components/JitsiMeeting/JitsiMeeting.jsx`
+- `SkillMatch-AI/src/app/components/JitsiMeeting/JitsiMeeting.jsx`
 
 It uses:
 - `https://meet.jit.si/external_api.js`

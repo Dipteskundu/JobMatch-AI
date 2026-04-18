@@ -1,6 +1,6 @@
-# 🔁 JobMatch AI — Application Workflow Guide
+# 🔁 SkillMatch AI — Application Workflow Guide
 
-This document explains **how the JobMatch AI workflow works** inside the application — from candidate signup → job discovery → recruiter pipeline → interviews → final selection.
+This document explains **how the SkillMatch AI workflow works** inside the application — from candidate signup → job discovery → recruiter pipeline → interviews → final selection.
 
 ---
 
@@ -43,8 +43,8 @@ This document explains **how the JobMatch AI workflow works** inside the applica
 
 | Part | Location | Notes |
 |---|---|---|
-| Frontend | `JobMatch-AI/` | Next.js App Router, React |
-| Backend | `JobMatch-AI-Server/` | Node.js + Express (Vercel compatible) |
+| Frontend | `SkillMatch-AI/` | Next.js App Router, React |
+| Backend | `SkillMatch-AI-Server/` | Node.js + Express (Vercel compatible) |
 | Auth | Firebase | Client sign-in + server verification |
 | DB | MongoDB | Primary data storage |
 | Realtime | Firebase Realtime DB | Used for pushing notifications/events (best-effort) |
@@ -82,7 +82,7 @@ Candidates typically use:
 ## 🧑‍💼 Recruiter Workflow (Pipeline)
 
 Recruiters use a stage-based pipeline UI (stepper) defined in:
-- `JobMatch-AI/src/app/components/PipelineLayout/PipelineLayout.jsx`
+- `SkillMatch-AI/src/app/components/PipelineLayout/PipelineLayout.jsx`
 
 ### Pipeline stages (UI → status mapping)
 
@@ -203,7 +203,7 @@ How join works:
 
 ### Backend
 ```bash
-cd JobMatch-AI-Server
+cd SkillMatch-AI-Server
 cp .env.example .env
 npm ci
 npm start
@@ -211,7 +211,7 @@ npm start
 
 ### Frontend
 ```bash
-cd ../JobMatch-AI
+cd ../SkillMatch-AI
 cp .env.example .env.local
 npm ci
 npm run dev

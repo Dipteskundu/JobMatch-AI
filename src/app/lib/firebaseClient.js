@@ -32,14 +32,14 @@ function normalizeDatabaseUrl(rawUrl) {
     const url = new URL(withScheme);
     const hostname = url.hostname.toLowerCase();
 
-    // Some setups mistakenly use `<db>.firebasedatabase.app` (missing region).
-    // That hostname does not resolve; fall back to the widely-supported legacy domain.
-    if (hostname.endsWith(".firebasedatabase.app")) {
-      const parts = hostname.split(".");
-      // `db.firebasedatabase.app` => ["db","firebasedatabase","app"]
-      if (parts.length === 3 && parts[0]) {
-        return `https://${parts[0]}.firebaseio.com`;
-      }
+    // If it already ends with valid firebase domains, keep it as is.
+    if (hostname.endsWith(".firebaseio.com") || hostname.endsWith(".firebasedatabase.app")) {
+      return url.origin;
+    }
+
+    // Legacy fallback for very old projects or partial URLs
+    if (hostname && !hostname.includes(".")) {
+      return `https://${hostname}.firebaseio.com`;
     }
 
     return url.origin;

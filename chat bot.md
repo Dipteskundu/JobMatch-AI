@@ -1,6 +1,6 @@
-﻿# 🤖 HireFlow AI Chatbot — How It Works (Gemini + Secure Read‑Only Assistant)
+﻿# 🤖 SkillMatch AI Chatbot — How It Works (Gemini + Secure Read‑Only Assistant)
 
-This document explains **how the chatbot works inside HireFlow AI**, how it stays secure (read‑only), what data it can access, and **why Gemini is used** in this project.
+This document explains **how the chatbot works inside SkillMatch AI**, how it stays secure (read‑only), what data it can access, and **why Gemini is used** in this project.
 
 ---
 
@@ -21,8 +21,8 @@ This document explains **how the chatbot works inside HireFlow AI**, how it stay
 ## 🧭 Where the chatbot appears
 
 The chatbot is a **global widget** rendered from the app layout:
-- Frontend: `JobMatch-AI/src/app/layout.js`
-- Component: `JobMatch-AI/src/app/components/Chatbot/Chatbot.jsx`
+- Frontend: `SkillMatch-AI/src/app/layout.js`
+- Component: `SkillMatch-AI/src/app/components/Chatbot/Chatbot.jsx`
 
 Behavior highlights:
 - Floating “Ask AI” button + chat panel UI
@@ -49,7 +49,7 @@ This happens in `Chatbot.jsx` when calling `POST /api/chatbot/ask`.
 
 ### ✅ Server (Express)
 1. Backend verifies the token using Firebase Admin:
-   - `JobMatch-AI-Server/middleware/auth.js`
+   - `SkillMatch-AI-Server/middleware/auth.js`
 2. Backend fetches the user profile from MongoDB (`users`) to attach a role.
 3. Server sets:
 ```js
@@ -67,9 +67,9 @@ Why this matters:
 ### `POST /api/chatbot/ask`
 
 Defined in:
-- `JobMatch-AI-Server/routes/chatbot.routes.js`
-- `JobMatch-AI-Server/controllers/chatbotController.js`
-- `JobMatch-AI-Server/services/chatbotService.js`
+- `SkillMatch-AI-Server/routes/chatbot.routes.js`
+- `SkillMatch-AI-Server/controllers/chatbotController.js`
+- `SkillMatch-AI-Server/services/chatbotService.js`
 
 **Request body**
 ```json
@@ -93,7 +93,7 @@ To handle case‑insensitive and slightly varied phrasing, user input is normali
 - `toLowerCase()`
 - remove punctuation like `. , ? !`
 
-Implementation: `normalizeInput()` in `JobMatch-AI-Server/services/chatbotService.js`
+Implementation: `normalizeInput()` in `SkillMatch-AI-Server/services/chatbotService.js`
 
 ### 2) Intent classification (keyword groups)
 The app uses a lightweight keyword approach to classify intent:
@@ -102,12 +102,12 @@ The app uses a lightweight keyword approach to classify intent:
 - `recruiter_workflow_help`
 - `user_data_summary`
 - `learning_guidance`
-- `job_matching_explanation`
+- `skill_matching_explanation`
 - `dashboard_navigation_help`
 - `safe_next_step_guidance`
 - fallback: `general`
 
-Implementation: `classifyIntent()` in `JobMatch-AI-Server/services/chatbotService.js`
+Implementation: `classifyIntent()` in `SkillMatch-AI-Server/services/chatbotService.js`
 
 Notes:
 - This is intentionally simple (fast + predictable).
@@ -147,7 +147,7 @@ Then it calls Gemini to produce a natural response.
 ## 📚 Knowledge base (tooling)
 
 The chatbot uses an internal knowledge source to answer platform questions consistently:
-- `JobMatch-AI-Server/config/systemKnowledge.json`
+- `SkillMatch-AI-Server/config/systemKnowledge.json`
 
 Each entry contains:
 - `category` (e.g., `platform_help`)
@@ -225,7 +225,7 @@ Yes — the architecture supports swapping the LLM provider, but you must preser
 ## 🧪 Troubleshooting
 
 ### “Gemini API not configured.”
-- Backend is missing `GEMINI_API_KEY` in `JobMatch-AI-Server/.env`.
+- Backend is missing `GEMINI_API_KEY` in `SkillMatch-AI-Server/.env`.
 
 ### “Unauthorized: Missing Token” (401)
 - Frontend didn’t attach the `Authorization` header.

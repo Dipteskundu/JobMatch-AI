@@ -32,6 +32,14 @@ export default function Chatbot() {
 
   const scrollRef = useRef(null);
 
+  /* ── Reset state on user change (privacy & session isolation) ──── */
+  useEffect(() => {
+    setMessages([WELCOME_MESSAGE]);
+    setHistoryLoaded(false);
+    setSuggestionsVisible(true);
+    setOpen(false);
+  }, [user?.uid]);
+
   /* ── Mobile menu event ────────────────────────────────── */
   useEffect(() => {
     const handler = (e) => setMobileMenuOpen(e.detail?.open ?? false);
