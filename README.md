@@ -1,6 +1,6 @@
 ﻿<div align="center">
 
-# 🎯 SkillMatch-AI
+# 🎯 JobMatch-AI
 
 ### AI‑powered hiring & job‑matching platform — from profile to interview, end‑to‑end.
 
@@ -28,12 +28,12 @@
 
 
 ---
-## Live Link: https://skillmatchai-phi.vercel.app
+## Live Link: https://jobmatch-ai-rust.vercel.app
 
 <a id="overview"></a>
 ## 📌 Overview
 
-**SkillMatch AI** is a full‑stack, AI‑assisted hiring platform that connects **candidates**, **recruiters**, and **admins** through a structured hiring pipeline.
+**JobMatch AI** is a full‑stack, AI‑assisted hiring platform that connects **candidates**, **recruiters**, and **admins** through a structured hiring pipeline.
 
 It helps solve common hiring pain points:
 - Candidates struggle to understand **what skills to improve** and **why a job is a good match**
@@ -122,7 +122,7 @@ cd "<your-repo-folder>"
 ### 2) Backend setup (Express API)
 
 ```bash
-cd SkillMatch-AI-Server
+cd JobMatch-AI-Server
 cp .env.example .env
 npm ci
 npm start
@@ -130,7 +130,7 @@ npm start
 
 Backend defaults to: `http://localhost:5001`
 
-Required env (see `SkillMatch-AI-Server/.env.example`):
+Required env (see `JobMatch-AI-Server/.env.example`):
 - `MONGODB_URI`
 - `MONGO_DB_NAME`
 - (Optional) `GEMINI_API_KEY`
@@ -143,7 +143,7 @@ Required env (see `SkillMatch-AI-Server/.env.example`):
 ### 3) Frontend setup (Next.js)
 
 ```bash
-cd ../SkillMatch-AI
+cd ../JobMatch-AI
 cp .env.example .env.local
 npm ci
 npm run dev
@@ -151,8 +151,8 @@ npm run dev
 
 Frontend defaults to: `http://localhost:3000`
 
-Required env (see `SkillMatch-AI/.env.example`):
-- `NEXT_PUBLIC_API_BASE_URL` (defaults to `http://localhost:5001` locally and `https://skillmatch-ai-server.onrender.com` in production)
+Required env (see `JobMatch-AI/.env.example`):
+- `NEXT_PUBLIC_API_BASE_URL` (defaults to `http://localhost:5001` locally and `https://JobMatch-ai-server.onrender.com` in production)
 - `NEXT_PUBLIC_FIREBASE_*`
 - (Optional) `NEXT_PUBLIC_IMGBB_API_KEY`
 
@@ -167,13 +167,13 @@ Protected API routes require a user JWT and the appropriate role and ownership p
 
 **Terminal A — Backend**
 ```bash
-cd SkillMatch-AI-Server
+cd JobMatch-AI-Server
 npm start
 ```
 
 **Terminal B — Frontend**
 ```bash
-cd SkillMatch-AI
+cd JobMatch-AI
 npm run dev
 ```
 
@@ -187,13 +187,13 @@ Then open: `http://localhost:3000`
 This repo is designed to deploy **frontend** and **backend** as **two separate Vercel projects**.
 
 ### 1) Deploy the backend
-1. Create a new Vercel project with **Root Directory** = `SkillMatch-AI-Server`.
-2. Add the required backend environment variables from `SkillMatch-AI-Server/.env.example`.
-3. Deploy — the backend is routed via `SkillMatch-AI-Server/vercel.json`.
+1. Create a new Vercel project with **Root Directory** = `JobMatch-AI-Server`.
+2. Add the required backend environment variables from `JobMatch-AI-Server/.env.example`.
+3. Deploy — the backend is routed via `JobMatch-AI-Server/vercel.json`.
 
 ### 2) Deploy the frontend
-1. Create a new Vercel project with **Root Directory** = `SkillMatch-AI`.
-2. Set `NEXT_PUBLIC_API_BASE_URL` to `https://skillmatch-ai-server.onrender.com` in the Vercel project environment settings.
+1. Create a new Vercel project with **Root Directory** = `JobMatch-AI`.
+2. Set `NEXT_PUBLIC_API_BASE_URL` to `https://JobMatch-ai-server.onrender.com` in the Vercel project environment settings.
 3. Redeploy the frontend so the build-time `/api` rewrite uses the configured backend URL.
 
 ---
@@ -213,7 +213,7 @@ This repo is designed to deploy **frontend** and **backend** as **two separate V
 
 ```text
 ./
-├─ SkillMatch-AI/                    # Frontend (Next.js)
+├─ JobMatch-AI/                    # Frontend (Next.js)
 │  ├─ public/
 │  ├─ src/
 │  │  └─ app/                      # App Router routes + UI
@@ -227,7 +227,7 @@ This repo is designed to deploy **frontend** and **backend** as **two separate V
 │  ├─ .env.example
 │  ├─ next.config.mjs
 │  └─ package.json
-└─ SkillMatch-AI-Server/             # Backend (Express)
+└─ JobMatch-AI-Server/             # Backend (Express)
    ├─ api/                         # Vercel serverless entry (if used)
    ├─ config/
    ├─ controllers/
