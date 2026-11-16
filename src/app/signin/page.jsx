@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { devWarn, safeError } from "../lib/logger";
-import { postLoginPath } from "../lib/redirect";
+import { postLoginPath, safeRedirectPath } from "../lib/redirect";
 import { useAuth } from "../lib/AuthContext";
 import AuthShell from "../components/common/AuthShell";
 
@@ -34,6 +34,16 @@ export default function SignInPage() {
   const [toast, setToast] = useState(null);
   const toastTimerRef = useRef(null);
   const [failedAttempts, setFailedAttempts] = useState(0);
+
+  // Forward an incoming ?redirect= to the sign-up page so switching
+  // mid-flow doesn't lose the destination.
+  const [signupHref, setSignupHref] = useState("/signup");
+  useEffect(() => {
+    const target = safeRedirectPath(
+      new URLSearchParams(window.location.search).get("redirect")
+    );
+    if (target !== "/") setSignupHref(`/signup?redirect=${encodeURIComponent(target)}`);
+  }, []);
 
   // Forgot Password States
   const [showResetModal, setShowResetModal] = useState(false);
@@ -250,7 +260,7 @@ export default function SignInPage() {
         <p className="animate-fade-up text-center text-sm text-slate-500 mt-5">
           Don&apos;t have an account?{" "}
           <Link
-            href="/signup"
+            href={signupHref}
             className="font-semibold text-indigo-600 hover:underline underline-offset-4"
           >
             Create one for free

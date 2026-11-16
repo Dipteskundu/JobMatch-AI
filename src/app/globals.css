@@ -481,7 +481,10 @@ html.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
   animation: mobile-menu-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 .animate-page-enter {
-  animation: page-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  /* No `forwards`: a lingering transform would become the containing block
+     for `position: fixed` descendants (glows, toasts) and create overflow —
+     the cause of the horizontal drag on auth pages. */
+  animation: page-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .animate-error-bounce {
   animation: error-bounce 1s ease-in-out;
@@ -1065,4 +1068,38 @@ html.dark .rbc-current-time-indicator { background: var(--ring); }
 /* Mobile hamburger: bars use bg-slate-800, which has no dark remap — make them light in dark mode */
 html.dark .hamburger-bar {
   background-color: var(--foreground) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Home page interactive extras (jobs marquee, hire burst, tab scroll)
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Auto-scrolling live jobs ticker: track holds the list twice, so
+   translating -50% loops seamlessly. */
+@keyframes home-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.home-marquee {
+  animation: home-marquee 45s linear infinite;
+}
+
+/* Confetti burst when a candidate is "hired" in the pipeline demo */
+@keyframes home-confetti {
+  0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(-46px) rotate(160deg) scale(0.4); opacity: 0; }
+}
+.home-confetti {
+  animation: home-confetti 1s ease-out forwards;
+}
+
+/* Hide scrollbars on horizontally scrollable tab rows */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .home-marquee,
+  .home-confetti {
+    animation: none !important;
+  }
 }

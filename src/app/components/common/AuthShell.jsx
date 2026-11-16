@@ -1,20 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Rocket, ArrowLeft, X, Github, Loader2 } from "lucide-react";
+import { ArrowLeft, X, Github, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../lib/AuthContext";
 import { googleSignIn, googleSignInErrorMessage } from "../../lib/firebase";
 import { postLoginPath } from "../../lib/redirect";
+import { FaLinkedin } from "react-icons/fa6";
 import {
-  Target,
-  Shield,
-  Building2,
-  Sparkles,
-  Briefcase,
-  BookOpen,
-} from "lucide-react";
+  SiIndeed,
+  SiGlassdoor,
+  SiUpwork,
+} from "react-icons/si";
 
 /**
  * Shared auth layout, Pixelcot-style: pastel gradient page, one big rounded
@@ -24,15 +23,39 @@ import {
  * other social buttons toast "coming soon".
  */
 
-// Domain orbit: icon, which ring (0 inner → 2 outer), angle in degrees.
+// Official multicolor Google "G", shared by the social row and the orbit chip.
+function GoogleG({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path fill="#EA4335" d="M12 5.04c1.62 0 3.06.56 4.2 1.64l3.12-3.12C17.46.98 14.96 0 12 0 7.7 0 3.99 2.47 2.18 6.07l3.66 2.84C6.71 6.19 9.14 5.04 12 5.04z" />
+      <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z" />
+      <path fill="#FBBC05" d="M5.84 14.71c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09L2.18 7.7C1.43 9.24 1 10.96 1 12.62s.44 3.38 1.18 4.92l3.66-2.83z" />
+      <path fill="#34A853" d="M12 23.62c3.06 0 5.62-1.01 7.52-2.73l-3.86-3c-1.08.72-2.45 1.16-3.66 1.16-2.86 0-5.29-1.93-6.16-4.53l-3.66 2.84c1.81 3.6 5.52 6.06 9.82 6.06z" />
+    </svg>
+  );
+}
+
+// Microsoft's official four-color squares.
+function MicrosoftLogo({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <rect x="1" y="1" width="10.4" height="10.4" fill="#f25022" />
+      <rect x="12.6" y="1" width="10.4" height="10.4" fill="#7fba00" />
+      <rect x="1" y="12.6" width="10.4" height="10.4" fill="#00a4ef" />
+      <rect x="12.6" y="12.6" width="10.4" height="10.4" fill="#ffb900" />
+    </svg>
+  );
+}
+
+// Orbit chips: real hiring-platform brand logos in official brand colors.
 // Ring 1 rotates slowly; its chips counter-rotate to stay upright.
 const ORBIT_CHIPS = [
-  { icon: Target, ring: 0, angle: -50 },
-  { icon: Shield, ring: 0, angle: 140 },
-  { icon: Building2, ring: 1, angle: -20 },
-  { icon: Sparkles, ring: 1, angle: 120 },
-  { icon: Briefcase, ring: 2, angle: 30 },
-  { icon: BookOpen, ring: 2, angle: 210 },
+  { logo: <MicrosoftLogo className="h-4 w-4" />, name: "Microsoft", ring: 0, angle: -50 },
+  { logo: <FaLinkedin className="h-5 w-5" style={{ color: "#0A66C2" }} />, name: "LinkedIn", ring: 0, angle: 140 },
+  { logo: <GoogleG className="h-5 w-5" />, name: "Google", ring: 1, angle: -20 },
+  { logo: <SiIndeed className="h-5 w-5" style={{ color: "#003A9B" }} />, name: "Indeed", ring: 1, angle: 120 },
+  { logo: <SiGlassdoor className="h-5 w-5" style={{ color: "#00A162" }} />, name: "Glassdoor", ring: 2, angle: 30 },
+  { logo: <SiUpwork className="h-5 w-5" style={{ color: "#14a800" }} />, name: "Upwork", ring: 2, angle: 210 },
 ];
 const RING_WIDTH = ["60%", "100%", "144%"]; // of the square orbit zone
 
@@ -48,14 +71,7 @@ function onEdge(ring, angle) {
 const SOCIALS = [
   {
     name: "Google",
-    svg: (
-      <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
-        <path fill="#EA4335" d="M12 5.04c1.62 0 3.06.56 4.2 1.64l3.12-3.12C17.46.98 14.96 0 12 0 7.7 0 3.99 2.47 2.18 6.07l3.66 2.84C6.71 6.19 9.14 5.04 12 5.04z" />
-        <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z" />
-        <path fill="#FBBC05" d="M5.84 14.71c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09L2.18 7.7C1.43 9.24 1 10.96 1 12.62s.44 3.38 1.18 4.92l3.66-2.83z" />
-        <path fill="#34A853" d="M12 23.62c3.06 0 5.62-1.01 7.52-2.73l-3.86-3c-1.08.72-2.45 1.16-3.66 1.16-2.86 0-5.29-1.93-6.16-4.53l-3.66 2.84c1.81 3.6 5.52 6.06 9.82 6.06z" />
-      </svg>
-    ),
+    svg: <GoogleG className="w-5 h-5" />,
   },
   {
     name: "GitHub",
@@ -63,10 +79,13 @@ const SOCIALS = [
   },
 ];
 
-function OrbitChip({ icon: Icon, ring, angle }) {
+function OrbitChip({ logo, name, ring, angle }) {
   const chip = (
-    <span className="animate-float-gentle bg-white border border-indigo-50 shadow-[0_8px_20px_rgba(79,70,229,0.18)] w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-indigo-600">
-      <Icon className="w-5 h-5" aria-hidden="true" />
+    <span
+      className="animate-float-gentle bg-white border border-indigo-50 shadow-[0_8px_20px_rgba(79,70,229,0.18)] w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center"
+      title={name}
+    >
+      {logo}
     </span>
   );
   const pos = onEdge(ring, angle);
@@ -99,6 +118,7 @@ export default function AuthShell({
   children,
 }) {
   const router = useRouter();
+  const { loginWithGoogle } = useAuth();
   const [toast, setToast] = useState(null);
   const toastTimerRef = useRef(null);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -143,7 +163,9 @@ export default function AuthShell({
   };
 
   return (
-    <div className="animate-page-enter min-h-screen bg-gradient-to-br from-fuchsia-100 via-indigo-100 to-sky-200 p-3 sm:p-6 lg:p-8 flex flex-col">
+    // overflow-x-clip: safety net so decorative glows can never create a
+    // horizontal scrollbar; `clip` keeps vertical scrolling intact.
+    <div className="animate-page-enter overflow-x-clip min-h-screen bg-gradient-to-br from-fuchsia-100 via-indigo-100 to-sky-200 p-3 sm:p-6 lg:p-8 flex flex-col">
       {/* Soft pulsing glows behind the card */}
       <div
         className="animate-glow-pulse fixed -top-20 -left-20 h-80 w-80 rounded-full bg-fuchsia-200/50 blur-[90px]"
@@ -277,9 +299,15 @@ export default function AuthShell({
                   <OrbitChip key={c.angle} {...c} />
                 ))}
 
-                {/* Center tile */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 sm:w-16 sm:h-16 rounded-[1.25rem] bg-gradient-to-br from-indigo-500 to-indigo-700 text-white shadow-xl shadow-indigo-600/30 flex items-center justify-center">
-                  <Rocket className="w-6 h-6 sm:w-7 sm:h-7" aria-hidden="true" />
+                {/* Center tile — JobMatch AI brand logo */}
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 sm:w-16 sm:h-16 rounded-[1.25rem] bg-gradient-to-br from-indigo-500 to-indigo-700 shadow-xl shadow-indigo-600/30 overflow-hidden">
+                  <Image
+                    src="/jobmatch-logo.svg"
+                    alt="JobMatch AI logo"
+                    width={64}
+                    height={64}
+                    className="w-full h-full"
+                  />
                 </div>
               </div>
 

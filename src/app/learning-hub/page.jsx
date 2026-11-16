@@ -12,7 +12,6 @@ import { PathCardSkeleton } from "../components/learning/Skeletons";
 import { fetchPaths } from "../lib/learningApi";
 import { useRequireLogin } from "../lib/requireLogin";
 import {
-  Sparkles,
   Compass,
   Route,
   BrainCircuit,
@@ -117,65 +116,73 @@ export default function LearningHubPage() {
 
       <main className="flex-1">
         <PageWrapper>
-          {/* ── 1. Hero ─────────────────────────────────────── */}
-          <section className="relative overflow-hidden">
-            <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-[64rem] h-[64rem] rounded-full bg-indigo-600/10 blur-3xl opacity-70"
-              aria-hidden="true"
-            />
+          {/* ── 1. Page Header + action bar (Jobs/Companies style) ── */}
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12">
+            {/* header */}
+            <div className="max-w-3xl mb-10 animate-fade-up">
+              <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
+                Learn the skills.{" "}
+                <span className="text-indigo-600">Then prove them.</span>
+              </h1>
+              <p className="mt-3 text-slate-500 text-lg leading-relaxed">
+                Tell the AI your goal — get a structured plan, learn in-app, and
+                prove it with assessments that show exactly where you stand,
+                all before you ever apply for a job.
+              </p>
+            </div>
 
-            <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 pb-20 sm:pb-28">
-              <div className="max-w-3xl animate-fade-up">
+            {/* action bar */}
+            <div className="bg-white p-1.5 rounded-3xl border border-slate-100 premium-shadow mb-12 flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 animate-fade-up">
+              <button
+                type="button"
+                onClick={handleCreatePlan}
+                className="group inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-indigo-600 text-white font-bold text-sm shadow-md shadow-indigo-600/20 hover:bg-indigo-700 active:scale-95 transition-all sm:flex-1"
+              >
+                Create My Learning Plan
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
+              </button>
 
+              <Link
+                href="/learning-hub/paths"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm hover:bg-slate-50 hover:border-indigo-200 active:scale-95 transition-all"
+              >
+                <Compass className="w-4 h-4 text-indigo-600" aria-hidden="true" />
+                Explore Learning Paths
+              </Link>
 
-                <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 tracking-tight leading-[1.05] mb-6">
-                  Learn the skills.
-                  <br />
-                  <span className="text-indigo-600">Then prove them.</span>
-                </h1>
-
-                <p className="text-lg sm:text-xl text-slate-500 leading-relaxed max-w-2xl mb-9">
-                  Technical learning paths, AI-personalized study plans, and skill
-                  assessments that show exactly where you stand — all before you
-                  ever apply for a job.
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                  <button
-                    type="button"
-                    onClick={handleCreatePlan}
-                    className="group inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-indigo-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-600/30 hover:-translate-y-0.5 active:scale-95 transition-all"
-                  >
-                    Create My Learning Plan
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
-                  </button>
-
-                  <Link
-                    href="/learning-hub/paths"
-                    className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm premium-shadow hover:bg-slate-50 hover:border-indigo-200 hover:-translate-y-0.5 active:scale-95 transition-all"
-                  >
-                    <Compass className="w-4 h-4 text-indigo-600" aria-hidden="true" />
-                    Explore Learning Paths
-                  </Link>
-                </div>
-
-                <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-semibold text-slate-400">
-                  <span className="inline-flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
-                    No sign-in needed to browse
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
-                    Diagnostic test optional
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
-                    Resume anytime
-                  </span>
-                </div>
+              {/* trust chips — desktop, inside the bar */}
+              <div className="hidden md:flex ml-auto items-center gap-x-5 pr-3 text-[11px] font-semibold text-slate-400">
+                <span className="inline-flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
+                  No sign-in needed to browse
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
+                  Diagnostic test optional
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
+                  Resume anytime
+                </span>
               </div>
             </div>
-          </section>
+
+            {/* trust chips — mobile, below the bar */}
+            <div className="md:hidden -mt-6 mb-12 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[11px] font-semibold text-slate-400">
+              <span className="inline-flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
+                No sign-in needed to browse
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
+                Diagnostic test optional
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
+                Resume anytime
+              </span>
+            </div>
+          </div>
 
           {/* ── 2. Explore Paths ─────────────────────────────── */}
           <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24">

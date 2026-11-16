@@ -16,7 +16,7 @@ import {
 import { useEffect, useState } from "react";
 import { safeError } from "../lib/logger";
 import { useAuth } from "../lib/AuthContext";
-import { postLoginPath } from "../lib/redirect";
+import { postLoginPath, safeRedirectPath } from "../lib/redirect";
 import AuthShell from "../components/common/AuthShell";
 
 // 16px inputs prevent the iOS focus-zoom jump; focus style matches Learning Hub.
@@ -31,6 +31,16 @@ const ROLES = [
 export default function SignUpPage() {
   const [mounted, setMounted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Forward an incoming ?redirect= to the sign-in page so switching
+  // mid-flow doesn't lose the destination.
+  const [signinHref, setSigninHref] = useState("/signin");
+  useEffect(() => {
+    const target = safeRedirectPath(
+      new URLSearchParams(window.location.search).get("redirect")
+    );
+    if (target !== "/") setSigninHref(`/signin?redirect=${encodeURIComponent(target)}`);
+  }, []);
   const [role, setRole] = useState("candidate"); // candidate or recruiter
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -62,6 +72,7 @@ export default function SignUpPage() {
         setError(result.message);
         return;
       }
+      sessionStorage.setItem("showWelcome", "1");
       router.push(postLoginPath());
     } catch (err) {
       safeError("Email sign up error", err);
@@ -266,7 +277,7 @@ export default function SignUpPage() {
         <p className="animate-fade-up text-center text-sm text-slate-500 mt-5">
           Already have an account?{" "}
           <Link
-            href="/signin"
+            href={signinHref}
             className="font-semibold text-indigo-600 hover:underline underline-offset-4"
           >
             Sign in

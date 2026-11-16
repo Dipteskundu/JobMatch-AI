@@ -6,7 +6,6 @@ import {
   Layers,
   BookOpen,
   ChevronRight,
-  Sparkles,
 } from "lucide-react";
 import { formatDuration } from "../../lib/learningApi";
 
@@ -29,10 +28,7 @@ export default function PathCard({ path, index = 0 }) {
       {/* Accent glow */}
       <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-indigo-600/10 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-      <div className="relative flex items-start justify-between gap-3 mb-5">
-        <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-          <Sparkles className="w-6 h-6 text-indigo-600" aria-hidden="true" />
-        </div>
+      <div className="relative flex items-start justify-end gap-3 mb-5">
         <span
           className={`px-3 py-1 rounded-full border text-[11px] font-bold uppercase tracking-wider ${levelClass}`}
         >

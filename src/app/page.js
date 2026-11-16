@@ -6,23 +6,34 @@ import HomeHero from "./components/Hero/HomeHero";
 import Link from "next/link";
 import {
   Activity,
-  AlertTriangle,
   ArrowRight,
   Brain,
-  CheckCircle2,
+  BriefcaseBusiness,
+  ChevronDown,
+  ClipboardList,
   PartyPopper,
   Search,
+  Send,
   ShieldCheck,
-  Star,
   Target,
   TrendingUp,
   Users,
-  X,
   Zap,
 } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
-import ApplyModal from "./components/form/ApplyModal";
 import { useAuth } from "./lib/AuthContext";
+import { useScrollReveal } from "./lib/useScrollReveal";
+
+/* ── Home page sections ── */
+import ProductTour from "./components/home/ProductTour";
+import FeatureSpotlight from "./components/home/FeatureSpotlight";
+import LivePulse from "./components/home/LivePulse";
+import LearningPathPreview from "./components/home/LearningPathPreview";
+import CompanySpotlight from "./components/home/CompanySpotlight";
+import TestimonialCarousel from "./components/home/TestimonialCarousel";
+import FaqAccordion from "./components/home/FaqAccordion";
+import HomeChatLauncher from "./components/home/HomeChatLauncher";
+import FeatureLink from "./components/home/FeatureLink";
 
 /* ─── Animated counter hook ───────────────────────────────────────────── */
 function useCountUp(target, duration = 1800, startOnView = true) {
@@ -86,7 +97,7 @@ const FEATURES = [
     desc: "Evaluate purely on skill signals and real performance data — fully anonymised until shortlisting.",
     accent: "bg-blue-50",
     iconColor: "text-blue-600",
-    large: true,
+    link: "/skill-test",
   },
   {
     id: "pulse",
@@ -95,7 +106,7 @@ const FEATURES = [
     desc: "Live evaluation tracking as candidates complete each assessment module.",
     accent: "bg-violet-50",
     iconColor: "text-violet-600",
-    large: false,
+    link: "/applications",
   },
   {
     id: "cognitive",
@@ -104,7 +115,7 @@ const FEATURES = [
     desc: "Understand problem-solving depth, not just code output or buzzword frequency.",
     accent: "bg-indigo-50",
     iconColor: "text-indigo-600",
-    large: false,
+    link: "/skill-test",
   },
   {
     id: "gap",
@@ -113,7 +124,7 @@ const FEATURES = [
     desc: "Pinpoint exactly where a candidate falls short and suggest targeted learning paths.",
     accent: "bg-emerald-50",
     iconColor: "text-emerald-600",
-    large: false,
+    link: "/skill-gap-detection",
   },
   {
     id: "ai",
@@ -122,7 +133,7 @@ const FEATURES = [
     desc: "Our proprietary model ranks candidates by verified ability, not keyword density.",
     accent: "bg-amber-50",
     iconColor: "text-amber-600",
-    large: true,
+    link: "/jobs",
   },
   {
     id: "targeted",
@@ -131,7 +142,7 @@ const FEATURES = [
     desc: "Define exactly what each role requires and let assessments map candidates against it.",
     accent: "bg-rose-50",
     iconColor: "text-rose-600",
-    large: false,
+    link: "/post-job",
   },
   {
     id: "pool",
@@ -140,7 +151,7 @@ const FEATURES = [
     desc: "Every completed assessment adds a verified profile to your searchable talent pool.",
     accent: "bg-cyan-50",
     iconColor: "text-cyan-600",
-    large: false,
+    link: "/applicants",
   },
 ];
 
@@ -151,48 +162,52 @@ const STATS = [
   { label: "Hours Saved", value: 8, suffix: "m", display: "8m" },
 ];
 
-const TESTIMONIALS = [
+const RECRUITER_STEPS = [
   {
-    name: "Jamie Williams",
-    role: "Engineering Manager",
-    company: "Midwest Tech",
-    avatar: "JW",
-    avatarBg: "bg-indigo-100 text-indigo-600",
-    text: "JobMatch's skill verification helped us identify candidates with actual practical experience, reducing our screening time by 40%.",
-    stars: 4,
+    step: "01",
+    icon: <Send className="w-5 h-5" />,
+    title: "Post a job",
+    desc: "Publish a role with required skills, salary and deadlines. Admin-approved so quality stays high.",
+    href: "/post-job",
+    cta: "Post a job",
   },
   {
-    name: "Rohit Patel",
-    role: "HR Director",
-    company: "Global Enterprises",
-    avatar: "RP",
-    avatarBg: "bg-emerald-100 text-emerald-600",
-    text: "The skill gap detection is spot-on. Our recruiters now have clear, actionable feedback for every applicant.",
-    stars: 5,
+    step: "02",
+    icon: <Target className="w-5 h-5" />,
+    title: "Review ranked applicants",
+    desc: "Applicants arrive ranked by fit score with matched, partial and missing skills on every card.",
+    href: "/applicants",
+    cta: "Open my pipeline",
   },
   {
-    name: "Elena Torres",
-    role: "Founder",
-    company: "StartUp Labs",
-    avatar: "ET",
-    avatarBg: "bg-violet-100 text-violet-600",
-    text: "As a bootstrapped founder, the free tier is perfect. We've hired 3 great developers through the platform already.",
-    stars: 5,
+    step: "03",
+    icon: <ClipboardList className="w-5 h-5" />,
+    title: "Schedule & score interviews",
+    desc: "Send interview invites, run video interviews in-app, and record structured scorecards.",
+    href: "/interviews",
+    cta: "Go to interviews",
+  },
+  {
+    step: "04",
+    icon: <PartyPopper className="w-5 h-5" />,
+    title: "Hire with evidence",
+    desc: "Promote your best candidate to Final Selected — the whole decision trail is documented.",
+    href: "/final-selected",
+    cta: "Review final selections",
   },
 ];
 
 /* ─── Component ────────────────────────────────────────────────────────── */
 export default function Home() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedJob] = useState({ title: "Senior Product Designer", company: "TechFlow AI" });
-
   /* Welcome Popup */
   const [showWelcome, setShowWelcome] = useState(false);
   const [welcomeLeaving, setWelcomeLeaving] = useState(false);
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
+
+  /* Smooth scroll-reveal for every section below the hero */
+  const revealRef = useScrollReveal({ stagger: 90 });
 
   useEffect(() => {
-
     if (typeof window !== "undefined" && sessionStorage.getItem("showWelcome") === "1") {
       sessionStorage.removeItem("showWelcome");
 
@@ -206,13 +221,11 @@ export default function Home() {
     setTimeout(() => { setShowWelcome(false); setWelcomeLeaving(false); }, 400);
   };
 
-
   useEffect(() => {
     if (!showWelcome) return;
     const hide = setTimeout(() => dismissWelcome(), 4000);
     return () => clearTimeout(hide);
   }, [showWelcome]);
-
 
   const displayName = user?.displayName
     ? user.displayName.split(" ")[0]
@@ -242,22 +255,29 @@ export default function Home() {
               <p className="text-[16px] font-black text-slate-900 truncate">{displayName}!</p>
             </div>
             <button onClick={dismissWelcome} className="shrink-0 p-1.5 rounded-lg text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-colors">
-              <X className="w-4 h-4" />
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
             </button>
           </div>
         </div>
       )}
 
-      <main>
-
+      <main ref={revealRef}>
+        {/* ══════════════════════════════════════════════════════════════
+            1. ORIGINAL HERO
+        ══════════════════════════════════════════════════════════════ */}
         <HomeHero stats={STATS} />
+
+        {/* ══════════════════════════════════════════════════════════════
+            2. LIVE PLATFORM PULSE — real approved jobs ticker
+        ══════════════════════════════════════════════════════════════ */}
+        <LivePulse />
 
         {/* ══════════════════════════════════════════════════════════════
             3. HOW IT WORKS
         ══════════════════════════════════════════════════════════════ */}
         <section id="how-it-works" className="py-5 sm:py-25 bg-white">
           <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-16">
+            <div className="text-center mb-16 reveal">
               <p className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase mb-3">Process</p>
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900">Three steps to smarter hiring</h2>
               <p className="text-slate-500 mt-3 text-base max-w-xl mx-auto">
@@ -270,7 +290,7 @@ export default function Home() {
               <div className="hidden md:block absolute top-12 left-[calc(16.66%+1.5rem)] right-[calc(16.66%+1.5rem)] h-[2px] bg-gradient-to-r from-indigo-200 via-violet-200 to-indigo-200" />
 
               {HOW_STEPS.map((step, idx) => (
-                <div key={step.num} className="card-hover relative bg-white border border-slate-100 rounded-2xl p-7 text-left hover:border-indigo-100 group">
+                <div key={step.num} className="reveal card-hover relative bg-white border border-slate-100 rounded-2xl p-7 text-left hover:border-indigo-100 group">
                   <div className="flex items-center gap-3 mb-5">
                     <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-md shadow-indigo-200 relative z-10">
                       {step.icon}
@@ -282,15 +302,54 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
+            <div className="mt-10 text-center reveal">
+              <FeatureLink
+                feature="/jobs"
+                className="inline-flex items-center gap-2 text-sm font-black text-indigo-600 hover:text-indigo-700 transition-colors"
+              >
+                See it live — browse open jobs ranked by skills <ArrowRight className="w-4 h-4" />
+              </FeatureLink>
+            </div>
           </div>
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            4. FEATURES — BENTO GRID
+            4. FOR RECRUITERS — HIRE IN 4 STEPS
+        ══════════════════════════════════════════════════════════════ */}
+        <section id="hiring-flow" className="py-20 sm:py-28 bg-slate-50">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center mb-14 reveal">
+              <p className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase mb-3">For recruiters</p>
+              <h2 className="text-3xl sm:text-4xl font-black text-slate-900">Hire in four steps</h2>
+              <p className="text-slate-500 mt-3 text-base max-w-xl mx-auto">
+                The exact flow you&apos;ll run inside the platform — click any step to see it in action.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+              {RECRUITER_STEPS.map((s) => (
+                <StepLink key={s.step} step={s} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════════════════════════════════════
+            5. TRY IT LIVE — INTERACTIVE PRODUCT TOUR
+        ══════════════════════════════════════════════════════════════ */}
+        <ProductTour />
+
+        {/* ══════════════════════════════════════════════════════════════
+            6. FEATURE SPOTLIGHT — detail + gated deep links
+        ══════════════════════════════════════════════════════════════ */}
+        <FeatureSpotlight />
+
+        {/* ══════════════════════════════════════════════════════════════
+            6. FEATURES — BENTO GRID
         ══════════════════════════════════════════════════════════════ */}
         <section className="home-theme-section py-20 sm:py-28">
           <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-16">
+            <div className="text-center mb-16 reveal">
               <p className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase mb-3">Capabilities</p>
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900">Everything you need to hire smarter</h2>
               <p className="text-slate-500 mt-3 text-base max-w-xl mx-auto">
@@ -300,30 +359,33 @@ export default function Home() {
 
             {/* Bento grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 auto-rows-auto">
-              {/* Bias-Free — large (col-span-2) */}
               <FeatureCard f={FEATURES[0]} className="sm:col-span-2" />
-              {/* Pulse — normal */}
               <FeatureCard f={FEATURES[1]} />
-              {/* Cognitive — normal */}
               <FeatureCard f={FEATURES[2]} />
-              {/* Skill Gap — normal */}
               <FeatureCard f={FEATURES[3]} />
-              {/* Role-to-Skill — normal (fills row 2) */}
               <FeatureCard f={FEATURES[5]} />
-              {/* AI Matching — large (col-span-2) */}
               <FeatureCard f={FEATURES[4]} className="sm:col-span-2" />
-              {/* Talent Pool — normal (fills row 3) */}
               <FeatureCard f={FEATURES[6]} />
             </div>
           </div>
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            5. STATS
+            7. LEARNING PATHS — real public catalog
+        ══════════════════════════════════════════════════════════════ */}
+        <LearningPathPreview />
+
+        {/* ══════════════════════════════════════════════════════════════
+            8. COMPANY SPOTLIGHT — real companies
+        ══════════════════════════════════════════════════════════════ */}
+        <CompanySpotlight />
+
+        {/* ══════════════════════════════════════════════════════════════
+            9. STATS
         ══════════════════════════════════════════════════════════════ */}
         <section className="py-20 bg-white">
           <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-12">
+            <div className="text-center mb-12 reveal">
               <p className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase mb-3">Impact</p>
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900">Numbers that speak for themselves</h2>
             </div>
@@ -336,170 +398,32 @@ export default function Home() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            6. TESTIMONIALS
+            10. SUCCESS STORIES CAROUSEL
         ══════════════════════════════════════════════════════════════ */}
-        <section className="home-theme-section py-20 sm:py-28">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <p className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase mb-3">Social Proof</p>
-              <h2 className="text-3xl sm:text-4xl font-black text-slate-900">Loved by hiring teams</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {TESTIMONIALS.map((t, i) => (
-                <div
-                  key={t.name}
-                  className="card-hover bg-white border border-slate-100 rounded-2xl p-7 flex flex-col"
-                >
-                  {/* Stars */}
-                  <div className="flex gap-0.5 mb-5">
-                    {Array.from({ length: t.stars }).map((_, j) => (
-                      <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <p className="text-slate-700 text-sm leading-relaxed flex-1">&quot;{t.text}&quot;</p>
-                  <div className="mt-6 flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-full text-sm font-black flex items-center justify-center ${t.avatarBg}`}>
-                      {t.avatar}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900">{t.name}</p>
-                      <p className="text-xs text-slate-400">{t.role} · {t.company}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <TestimonialCarousel />
 
         {/* ══════════════════════════════════════════════════════════════
-            7. HOW THE SCORE WORKS — EXPLAINABILITY
+            11. RESPONSIBLE AI — expandable explainability
         ══════════════════════════════════════════════════════════════ */}
         <section className="py-20 sm:py-28 bg-white">
           <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <p className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase mb-3">Transparent by design</p>
-              <h2 className="text-3xl sm:text-4xl font-black text-slate-900">Know exactly why candidates rank first</h2>
-              <p className="text-slate-500 mt-3 text-base max-w-xl mx-auto">
-                Every Hiring Fit Score is an explainable 0–100 number built from five openly weighted factors — never a black-box verdict.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-              {/* Factor breakdown */}
-              <div className="card-hover bg-white border border-slate-200 rounded-3xl p-7 sm:p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Scoring factors</p>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">Open weights</span>
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { factor: "Skill match", detail: "Required + preferred skills after normalization", weight: 45, chip: "bg-indigo-50 text-indigo-600" },
-                    { factor: "Assessment performance", detail: "Role-specific, automatically scored", weight: 25, chip: "bg-violet-50 text-violet-600" },
-                    { factor: "Relevant experience", detail: "Aligned with the stated experience level", weight: 15, chip: "bg-emerald-50 text-emerald-600" },
-                    { factor: "Education & qualification", detail: "Only when the job defines a requirement", weight: 10, chip: "bg-amber-50 text-amber-600" },
-                    { factor: "Additional role factors", detail: "Certifications and defined role criteria", weight: 5, chip: "bg-rose-50 text-rose-600" },
-                  ].map((f) => (
-                    <div key={f.factor}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-sm font-bold text-slate-900">{f.factor}</span>
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${f.chip}`}>{f.weight}%</span>
-                      </div>
-                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full" style={{ width: `${(f.weight / 45) * 100}%` }} />
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1">{f.detail}</p>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-slate-500 mt-6 leading-relaxed">
-                  If a job omits a component, its weight is redistributed by a documented policy — never silently zeroed.
-                </p>
-              </div>
-
-              {/* Score mock card */}
-              <div className="relative bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
-                <div className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-50 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-300" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-300" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-300" />
-                  <span className="ml-3 text-[10px] text-slate-400 font-mono">Hiring Fit Score · Candidate review</span>
-                </div>
-                <div className="p-6 space-y-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-black text-slate-900">Senior React Developer</p>
-                      <p className="text-xs text-slate-400">Ranked #1 of 24 applicants</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-3xl font-black text-indigo-600">87<span className="text-sm text-slate-400">/100</span></p>
-                      <p className="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Fit score</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2.5">
-                    {[
-                      { group: "Matched skills", tone: "bg-emerald-50 text-emerald-700", icon: "bg-emerald-100", check: "text-emerald-600", items: ["React.js", "TypeScript", "Node.js"] },
-                      { group: "Partial matches", tone: "bg-amber-50 text-amber-700", icon: "bg-amber-100", check: "text-amber-600", items: ["Next.js", "Docker"] },
-                      { group: "Missing skills", tone: "bg-slate-100 text-slate-500", icon: "bg-slate-200", check: "text-slate-500", items: ["GraphQL"] },
-                    ].map((g) => (
-                      <div key={g.group} className="border border-slate-100 rounded-xl p-3">
-                        <p className={`text-[10px] font-black uppercase tracking-widest inline-block px-2 py-0.5 rounded-full mb-2 ${g.tone}`}>{g.group}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {g.items.map((s) => (
-                            <span key={s} className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700">
-                              <CheckCircle2 className={`w-3.5 h-3.5 ${g.check}`} /> {s}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-[11px] text-slate-500 leading-relaxed border-t border-slate-100 pt-3">
-                    Recruiters see the same breakdown on every applicant — matched, partial, and missing skills are listed alongside the score.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════════
-            8. RESPONSIBLE AI — HUMAN IN THE LOOP
-        ══════════════════════════════════════════════════════════════ */}
-        <section className="py-20 sm:py-28 bg-slate-50">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-14">
+            <div className="text-center mb-14 reveal">
               <p className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase mb-3">Human in the loop</p>
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900">AI assists. Recruiters decide.</h2>
               <p className="text-slate-500 mt-3 text-base max-w-xl mx-auto">
                 The platform is decision support, not decision authority — every recommendation is transparent and reviewable.
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {[
-                { icon: <Activity className="w-6 h-6" />, accent: "bg-indigo-50", iconColor: "text-indigo-600", title: "Decision support only", desc: "Scores and rankings assist review — nothing is auto-rejected or auto-hired." },
-                { icon: <Users className="w-6 h-6" />, accent: "bg-emerald-50", iconColor: "text-emerald-600", title: "Humans make the call", desc: "Recruiters own every shortlist, interview, and hiring decision." },
-                { icon: <Brain className="w-6 h-6" />, accent: "bg-violet-50", iconColor: "text-violet-600", title: "Explainable by default", desc: "Matched, partial, and missing skills are listed with every score." },
-                { icon: <ShieldCheck className="w-6 h-6" />, accent: "bg-amber-50", iconColor: "text-amber-600", title: "Configurations are logged", desc: "Scoring weights and AI outputs are recorded so behavior can be audited." },
-              ].map((c) => (
-                <div key={c.title} className="card-hover bg-white border border-slate-100 rounded-2xl p-7 hover:border-indigo-100 group">
-                  <div className={`w-11 h-11 rounded-2xl ${c.accent} flex items-center justify-center mb-5 ${c.iconColor} group-hover:scale-110 transition-transform duration-200`}>
-                    {c.icon}
-                  </div>
-                  <h3 className="text-base font-black text-slate-900 mb-2 group-hover:text-indigo-700 transition-colors">{c.title}</h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">{c.desc}</p>
-                </div>
-              ))}
-            </div>
+            <AICards />
           </div>
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            9. FOR CANDIDATES — SKILL GAP TO GROWTH
+            12. FOR CANDIDATES — SKILL GAP TO GROWTH
         ══════════════════════════════════════════════════════════════ */}
-        <section className="py-20 sm:py-28 bg-white">
+        <section className="py-20 sm:py-28 bg-slate-50">
           <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-14">
+            <div className="text-center mb-14 reveal">
               <p className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase mb-3">For candidates</p>
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900">Turn every application into growth</h2>
               <p className="text-slate-500 mt-3 text-base max-w-xl mx-auto">
@@ -513,7 +437,7 @@ export default function Home() {
                 { step: "03", icon: <TrendingUp className="w-5 h-5" />, title: "See your skill gaps", desc: "Get a clear list of what is missing or weak for each target job." },
                 { step: "04", icon: <Zap className="w-5 h-5" />, title: "Close the gap", desc: "Follow suggested learning paths, re-test, and rank higher next time." },
               ].map((s) => (
-                <div key={s.step} className="card-hover bg-slate-50 border border-slate-100 rounded-2xl p-7 hover:border-indigo-100 group">
+                <div key={s.step} className="reveal card-hover bg-white border border-slate-100 rounded-2xl p-7 hover:border-indigo-100 group">
                   <div className="flex items-center gap-3 mb-5">
                     <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200">
                       {s.icon}
@@ -525,15 +449,23 @@ export default function Home() {
                 </div>
               ))}
             </div>
+            <div className="mt-10 text-center">
+              <Link
+                href="/resume"
+                className="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-full font-black text-sm shadow-md shadow-indigo-200 hover:bg-indigo-700 transition-colors"
+              >
+                Upload your resume <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            10. TRUST & SECURITY
+            13. TRUST & SECURITY — clickable policies
         ══════════════════════════════════════════════════════════════ */}
-        <section className="py-16 bg-slate-50 border-y border-slate-100">
-          <div className="max-w-6xl mx-auto px-6 text-center">
-            <p className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase mb-3">Trust & safety</p>
+        <section className="py-16 bg-white border-y border-slate-100">
+          <div className="max-w-6xl mx-auto px-6 text-center reveal">
+            <p className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase mb-3">Trust &amp; safety</p>
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900">Built with security defaults</h2>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               {[
@@ -543,9 +475,24 @@ export default function Home() {
                 "Data access limited by role",
                 "Validated API inputs",
               ].map((chip) => (
-                <span key={chip} className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-2 text-sm font-semibold text-slate-700">
+                <span key={chip} className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full px-4 py-2 text-sm font-semibold text-slate-700">
                   <ShieldCheck className="w-4 h-4 text-indigo-600" /> {chip}
                 </span>
+              ))}
+            </div>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              {[
+                { label: "Privacy policy", href: "/privacy" },
+                { label: "Terms of service", href: "/terms" },
+                { label: "Cookie policy", href: "/cookies" },
+              ].map((chip) => (
+                <Link
+                  key={chip.href}
+                  href={chip.href}
+                  className="inline-flex items-center gap-1.5 text-sm font-black text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-4 py-2 hover:bg-indigo-100 transition-colors"
+                >
+                  {chip.label} <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               ))}
             </div>
             <p className="text-sm text-slate-500 mt-6 max-w-xl mx-auto">
@@ -555,11 +502,21 @@ export default function Home() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            11. FINAL CTA BANNER
+            14. FAQ
+        ══════════════════════════════════════════════════════════════ */}
+        <FaqAccordion />
+
+        {/* ══════════════════════════════════════════════════════════════
+            15. MEET THE AI — chat launcher
+        ══════════════════════════════════════════════════════════════ */}
+        <HomeChatLauncher />
+
+        {/* ══════════════════════════════════════════════════════════════
+            16. FINAL CTA — dual path
         ══════════════════════════════════════════════════════════════ */}
         <section className="py-16 sm:py-20">
           <div className="max-w-5xl mx-auto px-6">
-            <div className="relative bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 rounded-3xl p-10 sm:p-16 text-center text-white overflow-hidden">
+            <div className="relative bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 rounded-3xl p-10 sm:p-16 text-center text-white overflow-hidden reveal-scale">
               {/* Grid overlay */}
               <div className="absolute inset-0 opacity-10 bg-[linear-gradient(90deg,rgba(255,255,255,0.15)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.15)_1px,transparent_1px)] bg-[size:20px_20px]" />
               {/* Orbs */}
@@ -568,26 +525,26 @@ export default function Home() {
 
               <div className="relative">
                 <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-bold tracking-wide mb-6">
-                  <Users className="w-3.5 h-3.5" /> 200+ companies already onboard
+                  <Users className="w-3.5 h-3.5" /> One platform for candidates &amp; recruiters
                 </div>
                 <h2 className="text-2xl sm:text-4xl font-black leading-tight">
-                  Ready to build a skill-first team?
+                  Ready to make your next move?
                 </h2>
                 <p className="text-indigo-200 text-sm sm:text-base mt-3 max-w-lg mx-auto">
-                  Create assessments, invite candidates, and hire with verified evidence — all in one platform.
+                  Find a role that values what you can actually do — or build a team that does the same.
                 </p>
                 <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
                   <Link
-                    href="/signup"
+                    href="/jobs"
                     className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-indigo-700 px-8 py-3.5 rounded-full font-black text-sm shadow-lg shadow-black/10 hover:bg-indigo-50 transition-colors"
                   >
-                    Get Started Free <ArrowRight className="w-4 h-4" />
+                    <BriefcaseBusiness className="w-4 h-4" /> Find my job
                   </Link>
                   <Link
-                    href="/jobs"
+                    href="/signup"
                     className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-800/60 border border-indigo-500/50 text-white px-8 py-3.5 rounded-full font-bold text-sm hover:bg-indigo-800 transition-colors"
                   >
-                    Talk to Sales
+                    Hire talent <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
                 <p className="mt-5 text-indigo-300 text-xs">No credit card required · Free plan available · Cancel anytime</p>
@@ -599,13 +556,6 @@ export default function Home() {
       </main>
 
       <Footer />
-
-      <ApplyModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        jobTitle={selectedJob.title}
-        companyName={selectedJob.company}
-      />
     </div>
   );
 }
@@ -614,13 +564,21 @@ export default function Home() {
 function FeatureCard({ f, className = "" }) {
   return (
     <div
-      className={`card-hover bg-white border border-slate-100 rounded-2xl p-7 flex flex-col hover:border-indigo-100 group ${className}`}
+      className={`reveal card-hover bg-white border border-slate-100 rounded-2xl p-7 flex flex-col hover:border-indigo-100 group ${className}`}
     >
       <div className={`w-11 h-11 rounded-2xl ${f.accent} flex items-center justify-center mb-5 ${f.iconColor} group-hover:scale-110 transition-transform duration-200`}>
         {f.icon}
       </div>
       <h3 className="text-base font-black text-slate-900 mb-2 group-hover:text-indigo-700 transition-colors">{f.title}</h3>
       <p className="text-sm text-slate-500 leading-relaxed">{f.desc}</p>
+      {f.link && (
+        <FeatureLink
+          feature={f.link}
+          className="mt-auto pt-4 border-t border-slate-100 flex items-center gap-1.5 text-xs font-black text-indigo-600 group-hover:gap-2.5 transition-all"
+        >
+          Explore this feature <ArrowRight className="w-3.5 h-3.5" />
+        </FeatureLink>
+      )}
     </div>
   );
 }
@@ -628,11 +586,9 @@ function FeatureCard({ f, className = "" }) {
 /* ─── Stat Card sub-component ─────────────────────────────────────────── */
 function StatCard({ stat }) {
   const { count, ref } = useCountUp(stat.value);
-  const isPercent = stat.suffix === "%";
-  const isSuffix  = stat.suffix !== "%";
 
   return (
-    <div ref={ref} className="card-hover bg-white border border-slate-100 rounded-2xl py-8 px-4 text-center hover:border-indigo-100">
+    <div ref={ref} className="reveal-scale card-hover bg-white border border-slate-100 rounded-2xl py-8 px-4 text-center hover:border-indigo-100">
       <div className="text-3xl sm:text-4xl font-black text-slate-900">
         <span className="shimmer-text">
           {count}{stat.suffix}
@@ -641,6 +597,99 @@ function StatCard({ stat }) {
       <div className="text-[10px] font-black tracking-[0.2em] uppercase text-slate-400 mt-2">
         {stat.label}
       </div>
+    </div>
+  );
+}
+
+/* ─── Recruiter step card (gated deep link → real feature) ────────────── */
+function StepLink({ step }) {
+  return (
+    <div className="reveal card-hover bg-white border border-slate-100 rounded-2xl p-7 flex flex-col hover:border-indigo-100 group text-left">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200">
+          {step.icon}
+        </div>
+        <span className="text-[10px] font-black tracking-widest text-slate-300 uppercase">{step.step}</span>
+      </div>
+      <h3 className="text-base font-black text-slate-900 mb-2 group-hover:text-indigo-700 transition-colors">{step.title}</h3>
+      <p className="text-sm text-slate-500 leading-relaxed flex-1">{step.desc}</p>
+      <FeatureLink
+        feature={step.href}
+        className="mt-4 inline-flex items-center gap-1.5 text-xs font-black text-indigo-600 group-hover:gap-2.5 transition-all"
+      >
+        {step.cta} <ArrowRight className="w-3.5 h-3.5" />
+      </FeatureLink>
+    </div>
+  );
+}
+
+/* ─── Responsible AI expandable cards ─────────────────────────────────── */
+const AI_CARDS = [
+  {
+    icon: <Activity className="w-6 h-6" />,
+    accent: "bg-indigo-50",
+    iconColor: "text-indigo-600",
+    title: "Decision support only",
+    short: "Scores and rankings assist review — nothing is auto-rejected or auto-hired.",
+    detail: "Every ranking is a suggestion for the recruiter, never a verdict. Even the lowest-scored applicant remains fully visible, reviewable, and shortlistable — the AI has no power to remove anyone from your pipeline.",
+  },
+  {
+    icon: <Users className="w-6 h-6" />,
+    accent: "bg-emerald-50",
+    iconColor: "text-emerald-600",
+    title: "Humans make the call",
+    short: "Recruiters own every shortlist, interview, and hiring decision.",
+    detail: "Shortlisting, interview scheduling, scoring and hiring all require explicit recruiter actions. The platform records who did what and when, so accountability stays with people — not the model.",
+  },
+  {
+    icon: <Brain className="w-6 h-6" />,
+    accent: "bg-violet-50",
+    iconColor: "text-violet-600",
+    title: "Explainable by default",
+    short: "Matched, partial, and missing skills are listed with every score.",
+    detail: "No score is ever just a number: the exact skill breakdown and the five open weights behind it are shown to recruiters and candidates alike. You can always ask \u201cwhy this score\u201d and get a real answer.",
+  },
+  {
+    icon: <ShieldCheck className="w-6 h-6" />,
+    accent: "bg-amber-50",
+    iconColor: "text-amber-600",
+    title: "Configurations are logged",
+    short: "Scoring weights and AI outputs are recorded so behavior can be audited.",
+    detail: "Every AI interaction and scoring configuration is stored and reviewable. If a result ever looks wrong, there is a complete audit trail to investigate — and to correct.",
+  },
+];
+
+function AICards() {
+  const [open, setOpen] = useState(-1);
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {AI_CARDS.map((c, i) => {
+        const isOpen = open === i;
+        return (
+          <div key={c.title} className="reveal h-full">
+            <button
+              onClick={() => setOpen(isOpen ? -1 : i)}
+              aria-expanded={isOpen}
+              className={`card-hover h-full w-full text-left bg-white border rounded-2xl p-7 group transition-colors ${isOpen ? "border-indigo-200 shadow-md shadow-indigo-100/40" : "border-slate-100 hover:border-indigo-100"}`}
+            >
+              <div className="flex items-center justify-between mb-5">
+                <div className={`w-11 h-11 rounded-2xl ${c.accent} flex items-center justify-center ${c.iconColor} group-hover:scale-110 transition-transform duration-200`}>
+                  {c.icon}
+                </div>
+                <span className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${isOpen ? "bg-indigo-600 text-white rotate-180" : "bg-slate-100 text-slate-400"}`}>
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </span>
+              </div>
+              <h3 className={`text-base font-black mb-2 transition-colors ${isOpen ? "text-indigo-700" : "text-slate-900 group-hover:text-indigo-700"}`}>{c.title}</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">{isOpen ? c.detail : c.short}</p>
+              <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-slate-300 group-hover:text-indigo-400 transition-colors">
+                {isOpen ? "Click to collapse" : "Click for details"}
+              </p>
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }

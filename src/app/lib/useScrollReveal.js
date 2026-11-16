@@ -13,6 +13,13 @@ import { useEffect, useMemo, useRef } from "react";
  *     <div className="reveal">...</div>
  *     <div className="reveal delay-200">...</div>
  *   </section>
+ *
+ * Optional stagger: when `stagger` (ms) is set, elements that enter the
+ * viewport in the same scroll batch animate top-to-bottom in a cascade.
+ * The delay is applied in JS (setTimeout) so hover transitions on the
+ * same elements are never delayed.
+ *
+ *   const containerRef = useScrollReveal({ stagger: 90 });
  */
 export function useScrollReveal(options = {}) {
   const ref = useRef(null);
@@ -25,20 +32,39 @@ export function useScrollReveal(options = {}) {
     const targets = el.querySelectorAll(".reveal, .reveal-left, .reveal-right, .reveal-scale");
     if (!targets.length) return;
 
+    const { stagger = 0 } = stableOptions;
+    const timers = [];
+
     const observer = new IntersectionObserver(
       (entries) => {
+        // Stagger: cascade the batch from top of the viewport downwards.
+        const batch = stagger
+          ? [...entries].filter((e) => e.isIntersecting).sort(
+              (a, b) => a.target.getBoundingClientRect().top - b.target.getBoundingClientRect().top
+            )
+          : entries;
+
+        let batchIndex = 0;
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
+          if (!entry.isIntersecting) return;
+          observer.unobserve(entry.target);
+
+          const delay = stagger ? batchIndex++ * stagger : 0;
+          if (delay > 0) {
+            timers.push(setTimeout(() => entry.target.classList.add("visible"), delay));
+          } else {
             entry.target.classList.add("visible");
-            observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px", ...stableOptions }
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
     );
 
     targets.forEach((t) => observer.observe(t));
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      timers.forEach(clearTimeout);
+    };
   }, [stableOptions]);
 
   return ref;

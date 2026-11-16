@@ -26,6 +26,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PageWrapper from "../components/common/PageWrapper";
 import api, { API_BASE } from "../lib/apiClient";
+import { signInUrlWithReturn } from "../lib/redirect";
 
 const JOBS_PER_PAGE = 9;
 
@@ -70,7 +71,7 @@ function LockOverlay() {
           Unlock smart search, salary ranges &amp; more
         </p>
         <Link
-          href="/signin"
+          href={signInUrlWithReturn("/jobs")}
           className="mt-1 inline-flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors"
         >
           <LogIn className="w-4 h-4" /> Sign In
@@ -346,7 +347,11 @@ export default function JobsPage() {
   /* ── Actions ─────────────────────────────────── */
   const handleApply = async (job) => {
     if (!isAuthenticated) {
-      router.push("/signin");
+      router.push(signInUrlWithReturn(
+                    typeof window !== "undefined"
+                      ? `${window.location.pathname}${window.location.search || ""}`
+                      : "/jobs"
+                  ));
       return;
     }
     // Recruiters cannot apply to jobs
@@ -377,7 +382,11 @@ export default function JobsPage() {
 
   const handleSave = async (job) => {
     if (!isAuthenticated) {
-      router.push("/signin");
+      router.push(signInUrlWithReturn(
+                    typeof window !== "undefined"
+                      ? `${window.location.pathname}${window.location.search || ""}`
+                      : "/jobs"
+                  ));
       return;
     }
     try {
@@ -393,7 +402,11 @@ export default function JobsPage() {
 
   const handleUploadResumeClick = () => {
     if (!isAuthenticated) {
-      router.push("/signin");
+      router.push(signInUrlWithReturn(
+                    typeof window !== "undefined"
+                      ? `${window.location.pathname}${window.location.search || ""}`
+                      : "/jobs"
+                  ));
       return;
     }
     router.push("/resume");
@@ -565,7 +578,7 @@ export default function JobsPage() {
                 <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
                 <p className="text-sm text-amber-800 font-medium">
                   <Link
-                    href="/signin"
+                    href={signInUrlWithReturn("/jobs")}
                     className="font-bold underline underline-offset-2"
                   >
                     Sign in
@@ -732,7 +745,11 @@ export default function JobsPage() {
                                 if (isAuthenticated) {
                                   router.push(`/jobs/${job._id}`);
                                 } else {
-                                  router.push("/signin");
+                                  router.push(signInUrlWithReturn(
+                    typeof window !== "undefined"
+                      ? `${window.location.pathname}${window.location.search || ""}`
+                      : "/jobs"
+                  ));
                                 }
                               }}
                             >

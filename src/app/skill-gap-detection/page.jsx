@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import PageWrapper from "../components/common/PageWrapper";
 import { API_BASE, apiFetch } from "../lib/apiClient";
+import { signInUrlWithReturn } from "../lib/redirect";
 
 export default function SkillGapDetectionPage() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -37,7 +38,8 @@ export default function SkillGapDetectionPage() {
   // Auth guard
   useEffect(() => {
     if (!authLoading && isAuthenticated === false && user === null) {
-      router.push("/signin");
+      const returnTo = `${window.location.pathname}${window.location.search || ""}`;
+      router.push(signInUrlWithReturn(returnTo));
     }
   }, [authLoading, isAuthenticated, user, router]);
 

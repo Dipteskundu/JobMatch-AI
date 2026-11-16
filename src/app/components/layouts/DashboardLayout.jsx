@@ -6,6 +6,7 @@ import { Bell, Home, Sun, Moon, Menu, Briefcase, Users, Loader2 } from "lucide-r
 import Link from "next/link";
 import { useAuth } from "../../lib/AuthContext";
 import { useTheme } from "../../lib/ThemeContext";
+import { signInUrlWithReturn } from "../../lib/redirect";
 import Avatar from "../common/Avatar";
 import PageTransition from "../common/PageTransition";
 import DashboardSidebar from "../../dashboard/components/DashboardSidebar";
@@ -24,7 +25,12 @@ export default function DashboardLayout({ children }) {
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated) {
-      router.push("/signin");
+      // Send guests to sign-in and bring them back to this exact page after auth.
+      const returnTo =
+        typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search || ""}`
+          : "/";
+      router.push(signInUrlWithReturn(returnTo));
     }
   }, [authLoading, isAuthenticated, router]);
 

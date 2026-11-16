@@ -5,6 +5,7 @@ import Link from "next/link";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { useAuth } from "../../lib/AuthContext";
 import api, { API_BASE } from "../../lib/apiClient";
+import { signInUrlWithReturn } from "../../lib/redirect";
 import ApplicationPulseTracker from "../../dashboard/components/candidate/ApplicationPulseTracker";
 
 export default function ApplicationsPage() {
@@ -45,7 +46,12 @@ export default function ApplicationsPage() {
         <h1 className="text-3xl font-extrabold mb-6">My Applications</h1>
 
         {!isAuthenticated && (
-          <p className="text-slate-500">Sign in to see your applications.</p>
+          <Link
+            href={signInUrlWithReturn("/applications")}
+            className="text-indigo-600 font-semibold underline underline-offset-2 hover:text-indigo-700"
+          >
+            Sign in to see your applications.
+          </Link>
         )}
 
         {loading && <p className="text-slate-500">Loading applications…</p>}

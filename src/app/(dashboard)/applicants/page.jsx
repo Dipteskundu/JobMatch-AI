@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../lib/AuthContext";
 import api, { API_BASE } from "../../lib/apiClient";
+import { signInUrlWithReturn } from "../../lib/redirect";
 import {
   Users, User, SlidersHorizontal, Star, X, Loader2,
   ChevronLeft, ChevronRight, BadgeCheck, MoreVertical,
@@ -102,7 +103,7 @@ export default function ApplicantsPage() {
     <div className="min-h-[60vh] flex items-center justify-center">
       <div className="text-center">
         <h2 className="text-xl font-bold text-slate-900 mb-2">Please Sign In</h2>
-        <Link href="/signin" className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700">Sign In</Link>
+        <Link href={signInUrlWithReturn("/applicants")} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700">Sign In</Link>
       </div>
     </div>
   );
