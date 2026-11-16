@@ -12,6 +12,7 @@ import {
   Briefcase,
   X,
   Loader2,
+  Check,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { devWarn, safeError } from "../lib/logger";
@@ -34,6 +35,9 @@ export default function SignInPage() {
   const [toast, setToast] = useState(null);
   const toastTimerRef = useRef(null);
   const [failedAttempts, setFailedAttempts] = useState(0);
+  // Tracks which demo-account chip the user last tapped, so it stays
+  // highlighted until the credentials are edited manually.
+  const [activeDemo, setActiveDemo] = useState(null);
 
   // Forward an incoming ?redirect= to the sign-up page so switching
   // mid-flow doesn't lose the destination.
@@ -173,7 +177,10 @@ export default function SignInPage() {
                 autoComplete="email"
                 placeholder="name@company.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setActiveDemo(null);
+                }}
                 className={`${inputClass} pl-11`}
               />
             </div>
@@ -197,7 +204,10 @@ export default function SignInPage() {
                 autoComplete="current-password"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setActiveDemo(null);
+                }}
                 className={`${inputClass} pl-11 pr-11`}
               />
               <button
@@ -228,7 +238,7 @@ export default function SignInPage() {
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <input
                 type="checkbox"
-                className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                className="w-4 h-4 rounded border-slate-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
               />
               <span className="text-sm text-slate-600">Remember me</span>
             </label>
@@ -295,20 +305,43 @@ export default function SignInPage() {
                 password: "dipteskundu6@gmail.com",
                 icon: User,
               },
-            ].map(({ role: r, email: e, password: p, icon: Icon }) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => {
-                  setEmail(e);
-                  setPassword(p);
-                }}
-                className="flex flex-col items-center justify-center gap-1 py-2.5 px-1.5 rounded-xl border border-slate-100 bg-slate-50 text-slate-500 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-              >
-                <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-                <span className="text-[10px] font-bold">{r}</span>
-              </button>
-            ))}
+            ].map(({ role: r, email: e, password: p, icon: Icon }) => {
+              const isActive = activeDemo === r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => {
+                    setEmail(e);
+                    setPassword(p);
+                    setActiveDemo(r);
+                  }}
+                  className={`flex flex-col items-center justify-center gap-1 py-2.5 px-1.5 rounded-xl border transition-all ${
+                    isActive
+                      ? "border-indigo-600 bg-indigo-600 text-white shadow-md shadow-indigo-600/25 scale-[1.03]"
+                      : "border-slate-100 bg-slate-50 text-slate-500 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
+                  }`}
+                >
+                  <Icon
+                    className={`w-3.5 h-3.5 transition-transform ${
+                      isActive ? "scale-110" : ""
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span className="text-[10px] font-bold flex items-center gap-1">
+                    {r}
+                    {isActive && (
+                      <Check
+                        className="w-3 h-3 animate-fade-in"
+                        strokeWidth={3}
+                        aria-hidden="true"
+                      />
+                    )}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </AuthShell>

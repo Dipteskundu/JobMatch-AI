@@ -229,7 +229,7 @@ export default function SignUpPage() {
             <input
               type="checkbox"
               required
-              className="w-4 h-4 mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              className="w-4 h-4 mt-0.5 rounded border-slate-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
             />
             <p className="text-xs text-slate-500 leading-relaxed">
               I agree to the{" "}

@@ -165,19 +165,19 @@ export default function AuthShell({
   return (
     // overflow-x-clip: safety net so decorative glows can never create a
     // horizontal scrollbar; `clip` keeps vertical scrolling intact.
-    <div className="animate-page-enter overflow-x-clip min-h-screen bg-gradient-to-br from-fuchsia-100 via-indigo-100 to-sky-200 p-3 sm:p-6 lg:p-8 flex flex-col">
+    <div className="auth-shell animate-page-enter overflow-x-clip min-h-screen bg-gradient-to-br from-fuchsia-100 via-indigo-100 to-sky-200 p-3 sm:p-6 lg:p-8 flex flex-col">
       {/* Soft pulsing glows behind the card */}
       <div
-        className="animate-glow-pulse fixed -top-20 -left-20 h-80 w-80 rounded-full bg-fuchsia-200/50 blur-[90px]"
+        className="auth-glow animate-glow-pulse fixed -top-20 -left-20 h-80 w-80 rounded-full bg-fuchsia-200/50 blur-[90px]"
         aria-hidden="true"
       />
       <div
-        className="animate-glow-pulse fixed -bottom-24 -right-16 h-96 w-96 rounded-full bg-sky-300/50 blur-[100px]"
+        className="auth-glow animate-glow-pulse fixed -bottom-24 -right-16 h-96 w-96 rounded-full bg-sky-300/50 blur-[100px]"
         aria-hidden="true"
       />
 
       <div className="flex-1 flex items-center justify-center w-full relative z-10">
-        <div className="w-full max-w-[1080px] rounded-[2rem] bg-white/95 backdrop-blur border border-white/60 premium-shadow overflow-hidden grid lg:grid-cols-[1.05fr_1fr]">
+        <div className="auth-card w-full max-w-[1080px] rounded-[2rem] bg-white/95 backdrop-blur border border-white/60 premium-shadow overflow-hidden grid lg:grid-cols-[1.05fr_1fr]">
           {/* ── Form column ── */}
           <div className="p-5 sm:p-10 xl:p-14 flex flex-col">
             {/* Back — returns to the page the user came from */}
@@ -258,7 +258,7 @@ export default function AuthShell({
           {/* ── Orbit panel ── */}
           {/* ── Orbit panel — desktop only; mobile keeps the clean form card ── */}
           <div className="hidden lg:block p-3 lg:p-4">
-            <div className="animate-card-rise relative overflow-hidden rounded-[1.5rem] bg-gradient-to-b from-sky-100 via-blue-50 to-indigo-100 flex flex-col items-center p-6 sm:p-8 min-h-[340px] h-full">
+            <div className="auth-panel animate-card-rise relative overflow-hidden rounded-[1.5rem] bg-gradient-to-b from-sky-100 via-blue-50 to-indigo-100 flex flex-col items-center p-6 sm:p-8 min-h-[340px] h-full">
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 text-center max-w-xs tracking-tight">
                 {panelTitle}
               </h2>
@@ -302,11 +302,11 @@ export default function AuthShell({
                 {/* Center tile — JobMatch AI brand logo */}
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 sm:w-16 sm:h-16 rounded-[1.25rem] bg-gradient-to-br from-indigo-500 to-indigo-700 shadow-xl shadow-indigo-600/30 overflow-hidden">
                   <Image
-                    src="/jobmatch-logo.svg"
-                    alt="JobMatch AI logo"
+                    src="/brandlogo.png"
+                    alt="JobMatch logo"
                     width={64}
                     height={64}
-                    className="w-full h-full"
+                    className="w-full h-full rotate-90"
                   />
                 </div>
               </div>
