@@ -3,10 +3,9 @@ import axios from "axios";
 const cleanEnv = (value) =>
   typeof value === "string" ? value.trim() : value;
 
-const DEFAULT_API_BASE =
-  process.env.NODE_ENV === "production"
-    ? "https://skillmatch-ai-server.onrender.com"
-    : "http://localhost:5001";
+// Production must be configured via NEXT_PUBLIC_API_BASE_URL — no hosted
+// backend URL is hardcoded here. Dev falls back to the local backend.
+const DEFAULT_API_BASE = "http://localhost:5001";
 const rawBase = cleanEnv(process.env.NEXT_PUBLIC_API_BASE_URL) || DEFAULT_API_BASE;
 
 // Strip trailing slash

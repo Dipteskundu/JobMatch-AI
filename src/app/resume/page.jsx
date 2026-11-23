@@ -69,7 +69,15 @@ export default function ResumePage() {
       formData.append("resume", file);
       formData.append("candidateId", user.uid);
 
-      const response = await api.post("/api/resume/upload", formData);
+      // The shared axios instance defaults to JSON, which would serialize this
+      // FormData and break multer on the server. Clear it for this one request
+      // so the browser can send multipart/form-data with its own boundary.
+      // Timeout is raised for this call only: AI extraction of a full PDF can
+      // take ~70s, well past the global 30s default.
+      const response = await api.post("/api/resume/upload", formData, {
+        headers: { "Content-Type": undefined },
+        timeout: 120000,
+      });
 
       const payload = response.data;
 
@@ -80,7 +88,11 @@ export default function ResumePage() {
           : "Resume uploaded and analyzed successfully.",
       );
     } catch (uploadError) {
-      setError(uploadError?.message || "Resume upload failed.");
+      setError(
+        uploadError?.response?.data?.message ||
+          uploadError?.message ||
+          "Resume upload failed.",
+      );
     } finally {
       setUploading(false);
     }

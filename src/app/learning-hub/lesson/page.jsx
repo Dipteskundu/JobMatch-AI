@@ -59,6 +59,9 @@ function LessonContent() {
   const [completing, setCompleting] = useState(false);
   const [swapping, setSwapping] = useState(false);
   const startedAt = useRef(Date.now());
+  // Mirror of `lesson` for the load effect below: reading state directly would
+  // require listing it as a dependency and re-run the fetch after every load.
+  const lessonRef = useRef(null);
 
   // The lesson player is for signed-in learners only — the login wall keeps
   // the return URL, so sign-in drops the user straight back onto this lesson.
@@ -75,7 +78,7 @@ function LessonContent() {
     startedAt.current = Date.now();
     // First view loads the whole page; every later change keeps the shell
     // (header, tracker) mounted and only swaps the lesson body — no blink.
-    if (lesson) setSwapping(true);
+    if (lessonRef.current) setSwapping(true);
     (async () => {
       if (!lessonId) {
         if (!cancelled) setError("No lesson selected.");
@@ -89,6 +92,7 @@ function LessonContent() {
         ]);
         if (!cancelled) {
           setLesson(lessonData);
+          lessonRef.current = lessonData;
           setPlan(plans.find((p) => String(p._id) === String(planId)) || null);
         }
       } catch (err) {

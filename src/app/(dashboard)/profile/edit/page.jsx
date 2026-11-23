@@ -8,11 +8,34 @@ import Image from "next/image";
 import {
   User, Mail, MapPin, Phone, Briefcase, Award, Save, ArrowLeft,
   Camera, Loader2, CheckCircle, AlertCircle, Plus, X,
-  GraduationCap, Code, Globe, Calendar,
+  GraduationCap, Code, Globe, Calendar, FileText, Upload,
 } from "lucide-react";
 import Link from "next/link";
 import Avatar from "../../../components/common/Avatar";
 import api, { API_BASE } from "../../../lib/apiClient";
+import {
+  getResumeProfileImportValues,
+  isProfileValueEmpty,
+} from "../../../lib/resumeProfileImport";
+
+const RESUME_IMPORT_FIELDS = [
+  ["displayName", "Full name"],
+  ["title", "Professional title"],
+  ["location", "Location"],
+  ["phone", "Phone"],
+  ["bio", "Professional summary"],
+  ["skills", "Core skills"],
+  ["yearsOfExperience", "Years of experience"],
+  ["experience", "Work experience"],
+  ["education", "Education"],
+  ["projects", "Projects"],
+  ["certificates", "Certificates"],
+  ["linkedin", "LinkedIn"],
+  ["github", "GitHub"],
+  ["twitter", "Twitter / X"],
+  ["website", "Personal website"],
+  ["portfolioUrl", "Portfolio URL"],
+];
 
 const TABS = [
   { id: "basic", label: "Basic Info", icon: User },
@@ -33,10 +56,17 @@ export default function EditProfilePage() {
     displayName: "", title: "", location: "", phone: "", bio: "", skills: "",
     photoURL: "", experience: [], education: [], projects: [], certificates: [],
     portfolioUrl: "", linkedin: "", github: "", twitter: "", website: "",
+    yearsOfExperience: "",
   });
   const [fetching, setFetching] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [resumeFile, setResumeFile] = useState(null);
+  const [resumeImport, setResumeImport] = useState(null);
+  const [selectedResumeFields, setSelectedResumeFields] = useState(new Set());
+  const [importingResume, setImportingResume] = useState(false);
+  const [resumeError, setResumeError] = useState("");
+  const [resumeSuccess, setResumeSuccess] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -58,6 +88,7 @@ export default function EditProfilePage() {
             education: userProfile.education || [],
             projects: userProfile.projects || [], 
             certificates: userProfile.certificates || [],
+            yearsOfExperience: userProfile.yearsOfExperience ?? "",
             portfolioUrl: userProfile.portfolioUrl || "", 
             linkedin: userProfile.linkedin || "",
             github: userProfile.github || "", 
@@ -73,6 +104,108 @@ export default function EditProfilePage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleResumeFileChange = (event) => {
+    const file = event.target.files?.[0] || null;
+    setResumeError("");
+    setResumeSuccess("");
+    setResumeImport(null);
+    setSelectedResumeFields(new Set());
+
+    if (!file) {
+      setResumeFile(null);
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setResumeFile(null);
+      setResumeError("Resume file must be 10MB or less.");
+      event.target.value = "";
+      return;
+    }
+
+    if (!/\.(pdf|doc|docx|txt)$/i.test(file.name)) {
+      setResumeFile(null);
+      setResumeError("Please upload a PDF, DOC, DOCX, or TXT resume.");
+      event.target.value = "";
+      return;
+    }
+
+    setResumeFile(file);
+  };
+
+  const handleResumeAnalyze = async () => {
+    if (!resumeFile) {
+      setResumeError("Choose a resume file first.");
+      return;
+    }
+
+    setImportingResume(true);
+    setResumeError("");
+    setResumeSuccess("");
+    try {
+      const uploadData = new FormData();
+      uploadData.append("resume", resumeFile);
+      uploadData.append("profileImport", "true");
+      const response = await api.post("/api/resume/upload", uploadData, {
+        headers: { "Content-Type": undefined },
+        timeout: 120000,
+      });
+      const values = getResumeProfileImportValues(response.data?.data);
+
+      if (Object.keys(values).length === 0) {
+        setResumeImport(null);
+        setResumeError("No editable profile details could be extracted. Try a clearer resume file.");
+        return;
+      }
+
+      setResumeImport({
+        values,
+        warning: response.data?.warning || "",
+        fileName: resumeFile.name,
+      });
+      setSelectedResumeFields(
+        new Set(Object.keys(values).filter((field) => isProfileValueEmpty(formData[field]))),
+      );
+    } catch (uploadError) {
+      setResumeError(
+        uploadError?.response?.data?.message ||
+          uploadError?.message ||
+          "Resume analysis failed.",
+      );
+    } finally {
+      setImportingResume(false);
+    }
+  };
+
+  const toggleResumeField = (field) => {
+    setSelectedResumeFields((previous) => {
+      const next = new Set(previous);
+      if (next.has(field)) next.delete(field);
+      else next.add(field);
+      return next;
+    });
+  };
+
+  const applyResumeImport = () => {
+    if (!resumeImport || selectedResumeFields.size === 0) {
+      setResumeError("Select at least one extracted field to apply.");
+      return;
+    }
+
+    setFormData((previous) => {
+      const next = { ...previous };
+      for (const field of selectedResumeFields) {
+        next[field] = resumeImport.values[field];
+      }
+      return next;
+    });
+    setResumeImport(null);
+    setResumeFile(null);
+    setSelectedResumeFields(new Set());
+    setResumeSuccess("Selected resume details were added to your unsaved profile. Review them and save your changes.");
+    setResumeError("");
   };
 
   // --- Experience ---
@@ -126,7 +259,13 @@ export default function EditProfilePage() {
     e.preventDefault();
     setUpdating(true); setError(""); setSuccess("");
     try {
-      const processedData = { ...formData, skills: formData.skills.split(",").map(s => s.trim()).filter(Boolean) };
+      const processedData = {
+        ...formData,
+        skills: formData.skills.split(",").map(s => s.trim()).filter(Boolean),
+        yearsOfExperience: formData.yearsOfExperience === ""
+          ? null
+          : Number(formData.yearsOfExperience),
+      };
       const res = await api.put(`/api/auth/profile/${user.uid}`, processedData);
       const json = res.data;
       if (json.success) {
@@ -153,6 +292,110 @@ export default function EditProfilePage() {
           <h1 className="text-2xl font-black text-slate-900">Edit Profile</h1>
           <p className="text-slate-500 text-sm mt-0.5">Keep your information up to date</p>
         </div>
+
+        <section className="mb-5 rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="rounded-xl bg-indigo-50 p-2.5 text-indigo-600">
+              <FileText className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="font-black text-slate-900">Fill your profile from a resume</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Review extracted details and choose what to add. Nothing is saved until you save your profile.
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.txt"
+              onChange={handleResumeFileChange}
+              disabled={importingResume}
+              aria-label="Upload resume for profile extraction"
+              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-semibold file:text-indigo-700"
+            />
+            <button
+              type="button"
+              onClick={handleResumeAnalyze}
+              disabled={importingResume || !resumeFile}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {importingResume
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <Upload className="h-4 w-4" />}
+              {importingResume ? "Analyzing..." : "Analyze resume"}
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-slate-400">PDF, DOC, DOCX, or TXT · 10MB maximum</p>
+          {resumeError && (
+            <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+              {resumeError}
+            </p>
+          )}
+          {resumeSuccess && (
+            <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+              {resumeSuccess}
+            </p>
+          )}
+
+          {resumeImport && (
+            <div className="mt-5 border-t border-slate-100 pt-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 className="font-bold text-slate-900">Review extracted details</h3>
+                  <p className="text-xs text-slate-500">{resumeImport.fileName}</p>
+                </div>
+                <p className="text-xs text-slate-500">Choose fields to apply; checked fields replace existing values.</p>
+              </div>
+              {resumeImport.warning && (
+                <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                  {resumeImport.warning}
+                </p>
+              )}
+              <div className="mt-3 space-y-2">
+                {RESUME_IMPORT_FIELDS.filter(([field]) => (
+                  Object.hasOwn(resumeImport.values, field)
+                )).map(([field, label]) => (
+                  <label key={field} className="flex cursor-pointer gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedResumeFields.has(field)}
+                      onChange={() => toggleResumeField(field)}
+                      className="mt-1 h-4 w-4 accent-indigo-600"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-xs font-black uppercase tracking-wide text-slate-500">{label}</span>
+                      {!isProfileValueEmpty(formData[field]) && (
+                        <span className="mt-1 block text-xs text-slate-500">
+                          Current: {formatResumeImportValue(field, formData[field])}
+                        </span>
+                      )}
+                      <span className="mt-1 block break-words text-sm font-medium text-slate-800">
+                        From resume: {formatResumeImportValue(field, resumeImport.values[field])}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={applyResumeImport}
+                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700"
+                >
+                  <CheckCircle className="h-4 w-4" /> Apply selected to form
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setResumeImport(null)}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  Discard
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
 
         {/* Tab Bar */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-1.5 mb-5 flex gap-1 overflow-x-auto">
@@ -213,6 +456,9 @@ export default function EditProfilePage() {
                   </Field>
                   <Field label="Phone" icon={<Phone className="w-4 h-4 text-slate-400" />}>
                     <input type="tel" name="phone" placeholder="01799137382" value={formData.phone} onChange={handleChange} className={inputCls} />
+                  </Field>
+                  <Field label="Years of Experience" icon={<Briefcase className="w-4 h-4 text-slate-400" />}>
+                    <input type="number" min="0" step="0.5" name="yearsOfExperience" placeholder="e.g. 3" value={formData.yearsOfExperience} onChange={handleChange} className={inputCls} />
                   </Field>
                 </div>
                 <div className="space-y-1.5">
@@ -423,6 +669,27 @@ export default function EditProfilePage() {
 // ── Helpers ──
 const inputCls = "w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-300";
 const cardInputCls = "px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-300";
+
+function formatResumeImportValue(field, value) {
+  if (!Array.isArray(value)) return String(value ?? "");
+
+  return value.map((entry) => {
+    if (field === "experience") {
+      const dates = [entry.startDate, entry.endDate].filter(Boolean).join(" – ");
+      return [entry.position, entry.company, dates].filter(Boolean).join(" · ");
+    }
+    if (field === "education") {
+      const degree = [entry.degree, entry.field].filter(Boolean).join(" ");
+      const dates = [entry.startDate, entry.endDate].filter(Boolean).join(" – ");
+      return [degree, entry.school, dates].filter(Boolean).join(" · ");
+    }
+    if (field === "projects") return entry.name || entry.description || "Project";
+    if (field === "certificates") {
+      return [entry.name, entry.issuer, entry.date].filter(Boolean).join(" · ");
+    }
+    return Object.values(entry).filter(Boolean).join(" · ");
+  }).join("; ");
+}
 
 function SectionHeader({ icon, title }) {
   return (
