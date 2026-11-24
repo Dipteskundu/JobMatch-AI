@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
+import ShareJobButton from "../../components/jobs/ShareJobButton";
 import { useAuth } from "../../lib/AuthContext";
 import api, { API_BASE } from "../../lib/apiClient";
 import {
@@ -17,7 +18,6 @@ import {
   Users,
   CheckCircle,
   Star,
-  Share2,
   Loader2,
   AlertCircle,
   Calendar,
@@ -145,10 +145,10 @@ export default function JobDetailsPage() {
           {!loading && !error && job && (
             <div className="animate-content-enter">
               {/* Hero card */}
-              <div className="bg-white rounded-3xl border border-slate-100 p-8 premium-shadow mb-6">
-                <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+              <div className="bg-white rounded-3xl border border-slate-100 p-5 sm:p-8 premium-shadow mb-6">
+                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-3 sm:flex sm:items-start sm:gap-6">
                   {/* Logo */}
-                  <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 shrink-0">
+                  <div className="col-start-1 row-start-1 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-slate-100 bg-slate-50">
                     {job.logo ? (
                       <span className="text-2xl">{job.logo}</span>
                     ) : (
@@ -157,7 +157,7 @@ export default function JobDetailsPage() {
                   </div>
 
                   {/* Title + meta */}
-                  <div className="flex-1 min-w-0">
+                  <div className="col-span-2 row-start-2 min-w-0 sm:col-auto sm:row-auto sm:flex-1">
                     <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2">
                       {job.title}
                     </h1>
@@ -210,27 +210,16 @@ export default function JobDetailsPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    {isJobClosed ? (
+                  <div className="col-start-2 row-start-1 flex shrink-0 items-center justify-end gap-2 sm:col-auto sm:row-auto sm:ml-auto">
+                    {isJobClosed && (
                       <button
                         disabled
                         className="px-6 py-3 bg-slate-100 text-slate-400 rounded-2xl font-bold text-sm cursor-not-allowed border border-slate-200"
                       >
                         {!isJobApproved ? "Pending Approval" : isDeadlinePassed ? "Deadline Passed" : "Applications Closed"}
                       </button>
-                    ) : (
-                      <button
-                        onClick={handleApply}
-                        disabled={isRecruiter}
-                        className={`px-8 py-3 rounded-2xl font-bold text-sm transition-all active:scale-95 ${
-                          isRecruiter
-                            ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                            : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-100"
-                        }`}
-                      >
-                        Apply Now
-                      </button>
                     )}
+                    <ShareJobButton job={job} />
                     <button
                       onClick={handleSave}
                       className={`p-3 border rounded-2xl transition-colors btn-press hover-scale ${

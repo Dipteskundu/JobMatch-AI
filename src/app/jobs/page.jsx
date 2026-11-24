@@ -4,6 +4,8 @@ import Navbar from "../components/Navbar/Navbar";
 import Footer from "../components/Footer/Footer";
 import ApplyModal from "../components/form/ApplyModal";
 import FitMapModal from "../components/FitMap/FitMapModal";
+import ProfileMatchButton from "../components/FitMap/ProfileMatchButton";
+import ShareJobButton from "../components/jobs/ShareJobButton";
 import { useAuth } from "../lib/AuthContext";
 import {
   Search,
@@ -139,6 +141,26 @@ function Pagination({ current, total, onChange }) {
         <ChevronRight className="w-4 h-4" />
       </button>
     </nav>
+  );
+}
+
+function AiMatchedPromo({ onUploadResume }) {
+  return (
+    <div className="p-6 bg-slate-900 rounded-2xl text-white relative overflow-hidden group">
+      <div className="relative z-10">
+        <h4 className="text-base font-bold mb-1">Get AI-Matched</h4>
+        <p className="text-slate-400 text-xs mb-4 leading-relaxed">
+          Upload your resume and let our AI find perfect roles for you.
+        </p>
+        <button
+          onClick={onUploadResume}
+          className="w-full py-2.5 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-slate-100 transition-colors"
+        >
+          Upload Resume
+        </button>
+      </div>
+      <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-indigo-600/20 rounded-full blur-2xl group-hover:bg-indigo-600/40 transition-all duration-500" />
+    </div>
   );
 }
 
@@ -412,6 +434,19 @@ export default function JobsPage() {
     router.push("/resume");
   };
 
+  const handleOpenJob = (job) => {
+    if (isAuthenticated) {
+      router.push(`/jobs/${job._id}`);
+      return;
+    }
+
+    router.push(signInUrlWithReturn(
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search || ""}`
+        : "/jobs"
+    ));
+  };
+
   /* ── Sidebar filter panel (shared desktop + mobile) ── */
   const SidebarFilters = () => (
     <div className="space-y-8">
@@ -479,21 +514,9 @@ export default function JobsPage() {
         </button>
       )}
 
-      {/* AI promo card */}
-      <div className="p-6 bg-slate-900 rounded-2xl text-white relative overflow-hidden group">
-        <div className="relative z-10">
-          <h4 className="text-base font-bold mb-1">Get AI-Matched</h4>
-          <p className="text-slate-400 text-xs mb-4 leading-relaxed">
-            Upload your resume and let our AI find perfect roles for you.
-          </p>
-          <button
-            onClick={handleUploadResumeClick}
-            className="w-full py-2.5 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-slate-100 transition-colors"
-          >
-            Upload Resume
-          </button>
-        </div>
-        <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-indigo-600/20 rounded-full blur-2xl group-hover:bg-indigo-600/40 transition-all duration-500" />
+      {/* Keep the promo in the desktop sidebar; mobile renders it below results. */}
+      <div className="hidden lg:block">
+        <AiMatchedPromo onUploadResume={handleUploadResumeClick} />
       </div>
     </div>
   );
@@ -731,87 +754,82 @@ export default function JobsPage() {
                     {paginated.map((job) => (
                       <div
                         key={job._id}
-                        className="bg-white p-6 sm:p-7 md:p-8 rounded-3xl border border-slate-100 premium-shadow hover:border-indigo-200 hover:shadow-indigo-50/50 transition-all group relative overflow-hidden"
+                        className="bg-white p-4 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl border border-slate-100 premium-shadow hover:border-indigo-200 hover:shadow-indigo-50/50 transition-all group relative overflow-hidden"
                       >
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
-                          {/* Left — clickable to details if authenticated */}
-                          <div className="flex items-start gap-5">
-                            <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center font-black text-indigo-600 text-lg group-hover:bg-indigo-50 transition-colors border border-slate-100 shrink-0">
+                        <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0 md:grid-cols-[56px_minmax(0,1fr)_auto] md:gap-x-5 md:gap-y-0">
+                          {/* Logo and job identity */}
+                          <div className="col-start-1 row-start-1 flex min-w-0 items-start gap-2.5 md:contents">
+                            <div className="col-start-1 row-span-2 row-start-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 text-base font-black text-indigo-600 transition-colors group-hover:bg-indigo-50 sm:h-14 sm:w-14 sm:rounded-2xl sm:text-lg md:h-14 md:w-14">
                               {job.logo || <Building2 className="w-6 h-6" />}
                             </div>
                             <div
-                              className="cursor-pointer"
-                              onClick={() => {
-                                if (isAuthenticated) {
-                                  router.push(`/jobs/${job._id}`);
-                                } else {
-                                  router.push(signInUrlWithReturn(
-                    typeof window !== "undefined"
-                      ? `${window.location.pathname}${window.location.search || ""}`
-                      : "/jobs"
-                  ));
-                                }
-                              }}
+                              className="col-start-2 row-start-1 min-w-0 cursor-pointer md:col-start-2"
+                              onClick={() => handleOpenJob(job)}
                             >
-                              <h3 className="text-lg font-black text-slate-900 group-hover:text-indigo-600 transition-colors mb-1.5">
+                              <h3 className="mb-1 text-base font-black leading-snug text-slate-900 transition-colors group-hover:text-indigo-600 sm:text-lg md:mb-1.5">
                                 {job.title}
                               </h3>
-                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-slate-500 text-sm font-medium">
-                                <span className="flex items-center gap-1.5">
-                                  <Building2 className="w-3.5 h-3.5" />{" "}
-                                  {job.company}
-                                </span>
-                                <span className="flex items-center gap-1.5">
-                                  <MapPin className="w-3.5 h-3.5" />{" "}
-                                  {job.location}
-                                </span>
-                                <span className="flex items-center gap-1.5">
-                                  <Briefcase className="w-3.5 h-3.5" />{" "}
-                                  {job.employmentType || job.type || "—"}
-                                </span>
-                                <span className="flex items-center gap-1.5 text-indigo-600 font-bold">
-                                  <DollarSign className="w-3.5 h-3.5" />
-                                  {job.salary ||
-                                    job.salaryRange ||
-                                    "Competitive"}
-                                </span>
-                                {job.vacancies && (
-                                  <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
-                                    <Filter className="w-3.5 h-3.5" />
-                                    {job.vacancies} open
-                                  </span>
-                                )}
-                                {job.deadline && (() => {
-                                  const isPast = new Date(job.deadline) < new Date();
-                                  const days = Math.ceil((new Date(job.deadline) - new Date()) / (1000*60*60*24));
-                                  return (
-                                    <span className={`flex items-center gap-1.5 font-semibold text-xs px-2 py-0.5 rounded-full ${isPast ? "bg-red-50 text-red-600" : days <= 7 ? "bg-orange-50 text-orange-600" : "bg-slate-100 text-slate-500"}`}>
-                                      ⏰ {isPast ? "Closed" : days <= 0 ? "Today!" : `${days}d left`}
-                                    </span>
-                                  );
-                                })()}
-                              </div>
                             </div>
                           </div>
-                          {/* Right */}
-                          <div className="flex items-center gap-2 shrink-0">
-                            {isAuthenticated && (
-                              <button
-                                onClick={() => {
-                                  if (isRecruiter) { setShowRecruiterModal(true); return; }
-                                  setFitJob(job);
-                                }}
-                                disabled={isRecruiter}
-                                className={`px-4 py-2.5 border rounded-xl font-bold text-sm transition-all text-xs ${
-                                  isRecruiter
-                                    ? "border-slate-200 text-slate-300 cursor-not-allowed bg-slate-50"
-                                    : "border-indigo-200 text-indigo-600 hover:bg-indigo-50"
-                                }`}
-                                title={isRecruiter ? "Only candidates can use Check Fit" : "See how well you match this job"}
-                              >
-                                Check Fit
-                              </button>
-                            )}
+
+                          {/* Metadata */}
+                          <div
+                            className="col-span-2 row-start-2 flex cursor-pointer flex-wrap items-center gap-1.5 text-[11px] font-medium text-slate-500 md:col-start-2 md:col-span-1 md:row-start-2 md:gap-x-4 md:gap-y-1.5 md:text-sm"
+                            onClick={() => handleOpenJob(job)}
+                          >
+                              <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-50 px-2 py-1 md:bg-transparent md:px-0 md:py-0">
+                                <Building2 className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" />
+                                {job.company}
+                              </span>
+                              <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-50 px-2 py-1 md:bg-transparent md:px-0 md:py-0">
+                                <MapPin className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" />
+                                {job.location}
+                              </span>
+                              <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-50 px-2 py-1 md:bg-transparent md:px-0 md:py-0">
+                                <Briefcase className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" />
+                                {job.employmentType || job.type || "—"}
+                              </span>
+                              <span className="inline-flex items-center gap-1.5 rounded-md bg-indigo-50 px-2 py-1 font-bold text-indigo-600 md:bg-transparent md:px-0 md:py-0">
+                                <DollarSign className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" />
+                                {job.salary || job.salaryRange || "Competitive"}
+                              </span>
+                              {job.vacancies && (
+                                <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2 py-1 font-semibold text-emerald-600 md:bg-transparent md:px-0 md:py-0">
+                                  <Filter className="h-3 w-3 shrink-0 md:h-3.5 md:w-3.5" />
+                                  {job.vacancies} open
+                                </span>
+                              )}
+                              {job.deadline && (() => {
+                                const isPast = new Date(job.deadline) < new Date();
+                                const days = Math.ceil((new Date(job.deadline) - new Date()) / (1000*60*60*24));
+                                return (
+                                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-semibold md:text-xs ${isPast ? "bg-red-50 text-red-600" : days <= 7 ? "bg-orange-50 text-orange-600" : "bg-slate-100 text-slate-500"}`}>
+                                    ⏰ {isPast ? "Closed" : days <= 0 ? "Today!" : `${days}d left`}
+                                  </span>
+                                );
+                              })()}
+                          </div>
+
+                          {/* Fit score, application status, and save controls */}
+                          <div className="col-start-2 row-start-1 flex shrink-0 flex-col items-center justify-center gap-1.5 md:col-start-3 md:row-span-2 md:flex-row md:gap-2">
+                            {isAuthenticated &&
+                              (isRecruiter ? (
+                                <button
+                                  type="button"
+                                  disabled
+                                  className="cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-300"
+                                  title="Only candidates can use Check Fit"
+                                >
+                                  Check Fit
+                                </button>
+                              ) : (
+                                <ProfileMatchButton
+                                  jobId={job._id}
+                                  jobTitle={job.title}
+                                  uid={user.uid}
+                                  onClick={() => setFitJob(job)}
+                                />
+                              ))}
                             {(() => {
                               const isPastDeadline = job.deadline && new Date(job.deadline) < new Date();
                               const isClosed = job.status === "closed" || isPastDeadline;
@@ -829,22 +847,11 @@ export default function JobsPage() {
                                   </button>
                                 );
                               }
-                              return (
-                                <button
-                                  onClick={() => isRecruiter ? setShowRecruiterModal(true) : handleApply(job)}
-                                  className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 ${
-                                    isRecruiter
-                                      ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                                      : "bg-slate-900 text-white hover:bg-indigo-600"
-                                  }`}
-                                >
-                                  Apply Now
-                                </button>
-                              );
+                              return null;
                             })()}
                             <button
                               onClick={() => handleSave(job)}
-                              className="p-2.5 border border-slate-100 rounded-xl hover:bg-amber-50 hover:border-amber-200 transition-colors group/star"
+                              className="rounded-lg border border-slate-100 p-2 transition-colors group/star hover:border-amber-200 hover:bg-amber-50 sm:rounded-xl sm:p-2.5"
                               aria-label="Save job"
                             >
                               <Star className="w-4.5 w-[18px] h-[18px] text-slate-300 group-hover/star:text-amber-400 transition-colors" />
@@ -853,22 +860,25 @@ export default function JobsPage() {
                         </div>
 
                         {/* Tags + date */}
-                        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 pt-5 border-t border-slate-50">
+                        <div className="mt-0 flex flex-col gap-3 border-t border-slate-100 pt-3 md:mt-5 md:flex-row md:items-center md:justify-between md:gap-3 md:pt-5">
                           <div className="flex flex-wrap gap-1.5">
                             {(job.skills || job.tags || [])
                               .slice(0, 6)
                               .map((tag) => (
                                 <span
                                   key={tag}
-                                  className="px-2.5 py-1 bg-slate-50 text-slate-600 text-[11px] font-bold uppercase tracking-wider rounded-lg"
+                                  className="rounded-md bg-slate-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-600 sm:rounded-lg sm:px-2.5 sm:text-[11px]"
                                 >
                                   {tag}
                                 </span>
                               ))}
                           </div>
-                          <span className="text-xs text-slate-400 italic">
-                            Posted {job.posted || "Recently"}
-                          </span>
+                          <div className="flex w-full flex-wrap items-center justify-between gap-2 md:w-auto md:justify-end">
+                            <span className="text-[11px] italic text-slate-400 sm:text-xs">
+                              Posted {job.posted || "Recently"}
+                            </span>
+                            <ShareJobButton job={job} />
+                          </div>
                         </div>
 
                         {/* Decorative glow */}
@@ -892,6 +902,10 @@ export default function JobsPage() {
                     results
                   </p>
                 )}
+
+                <div className="mt-8 lg:hidden">
+                  <AiMatchedPromo onUploadResume={handleUploadResumeClick} />
+                </div>
               </div>
             </div>
           </PageWrapper>
