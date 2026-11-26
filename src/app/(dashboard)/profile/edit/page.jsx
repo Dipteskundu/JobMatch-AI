@@ -118,16 +118,16 @@ export default function EditProfilePage() {
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 4 * 1024 * 1024) {
       setResumeFile(null);
-      setResumeError("Resume file must be 10MB or less.");
+      setResumeError("Resume file must be 4 MiB or less.");
       event.target.value = "";
       return;
     }
 
-    if (!/\.(pdf|doc|docx|txt)$/i.test(file.name)) {
+    if (!/\.(pdf|docx|txt)$/i.test(file.name)) {
       setResumeFile(null);
-      setResumeError("Please upload a PDF, DOC, DOCX, or TXT resume.");
+      setResumeError("Please upload a text-based PDF, DOCX, or TXT resume.");
       event.target.value = "";
       return;
     }
@@ -301,14 +301,14 @@ export default function EditProfilePage() {
             <div className="min-w-0 flex-1">
               <h2 className="font-black text-slate-900">Fill your profile from a resume</h2>
               <p className="mt-1 text-sm text-slate-500">
-                Review extracted details and choose what to add. Nothing is saved until you save your profile.
+                Review locally detected details and choose what to add. Nothing is saved until you save your profile.
               </p>
             </div>
           </div>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
             <input
               type="file"
-              accept=".pdf,.doc,.docx,.txt"
+              accept=".pdf,.docx,.txt"
               onChange={handleResumeFileChange}
               disabled={importingResume}
               aria-label="Upload resume for profile extraction"
@@ -326,7 +326,7 @@ export default function EditProfilePage() {
               {importingResume ? "Analyzing..." : "Analyze resume"}
             </button>
           </div>
-          <p className="mt-2 text-xs text-slate-400">PDF, DOC, DOCX, or TXT · 10MB maximum</p>
+          <p className="mt-2 text-xs text-slate-400">Text-based PDF, DOCX, or TXT · 4 MiB maximum · processed locally without AI APIs</p>
           {resumeError && (
             <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
               {resumeError}

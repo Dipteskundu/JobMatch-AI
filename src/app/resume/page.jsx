@@ -8,6 +8,9 @@ import Footer from "../components/Footer/Footer";
 import api from "../lib/apiClient";
 import {
   ArrowLeft,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   Briefcase,
   Building2,
   CheckCircle,
@@ -16,38 +19,142 @@ import {
   RefreshCw,
   Search,
   Sparkles,
+  X,
+  XCircle,
 } from "lucide-react";
 import { buildResumeSkillSet, rankJobsForResume } from "../lib/jobMatch";
+import MatchScoreRing from "../components/FitMap/MatchScoreRing";
 
-const acceptedTypes = [
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "text/plain",
-];
+const MATCHES_PER_PAGE = 8;
 
-/** Colour-coded match percentage badge. */
-function MatchBadge({ score }) {
-  const tone =
-    score >= 75
-      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-      : score >= 50
-        ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-        : "bg-amber-50 text-amber-700 border-amber-200";
-  const label =
-    score >= 75 ? "Strong Match" : score >= 50 ? "Good Fit" : "Partial Match";
+function Pagination({ current, total, onChange }) {
+  if (total <= 1) return null;
+  const pages = Array.from({ length: total }, (_, index) => index + 1);
 
   return (
-    <div className={`text-center rounded-2xl border px-4 py-2.5 ${tone}`}>
-      <p className="text-xl font-black leading-none">{score}%</p>
-      <p className="text-[10px] font-black uppercase tracking-wider mt-1">
-        {label}
-      </p>
+    <nav className="flex items-center justify-center gap-1.5 pt-4" aria-label="Pagination">
+      <button
+        type="button"
+        onClick={() => onChange(current - 1)}
+        disabled={current === 1}
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
+        aria-label="Previous page"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+      {pages.map((page) => {
+        const ellipsis = total > 7 && page !== 1 && page !== total &&
+          (page < current - 2 || page > current + 2);
+        if (ellipsis) {
+          if (page === current - 3 || page === current + 3) {
+            return <span key={page} className="px-1 text-slate-400">…</span>;
+          }
+          return null;
+        }
+        return (
+          <button
+            type="button"
+            key={page}
+            onClick={() => onChange(page)}
+            className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold transition-colors ${
+              page === current
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "border border-slate-200 text-slate-600 hover:bg-slate-50"
+            }`}
+            aria-current={page === current ? "page" : undefined}
+          >
+            {page}
+          </button>
+        );
+      })}
+      <button
+        type="button"
+        onClick={() => onChange(current + 1)}
+        disabled={current === total}
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
+        aria-label="Next page"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </nav>
+  );
+}
+
+function ResumeMatchDetails({ match, onClose }) {
+  if (!match) return null;
+  const { job, matchScore, directDisplay, adjacentDisplay, missingDisplay, totalRequired } = match;
+  const sections = [
+    { title: "Direct matches", skills: directDisplay, icon: <CheckCircle className="h-4 w-4 text-emerald-500" /> },
+    { title: "Adjacent skills", skills: adjacentDisplay, icon: <ArrowRight className="h-4 w-4 text-indigo-500" /> },
+    { title: "Missing required skills", skills: missingDisplay, icon: <XCircle className="h-4 w-4 text-rose-500" /> },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="presentation">
+      <button
+        type="button"
+        aria-label="Close resume match breakdown"
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="resume-match-dialog-title"
+        className="relative w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl sm:p-8"
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close resume match breakdown"
+          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <p className="text-xs font-black uppercase tracking-widest text-indigo-600">Resume Match</p>
+        <h2 id="resume-match-dialog-title" className="mt-1 pr-10 text-xl font-black text-slate-900">
+          {job.title}
+        </h2>
+        <p className="mt-1 text-sm text-slate-500">{job.company}</p>
+        <div className="mt-5 rounded-2xl bg-indigo-50 p-4">
+          <p className="text-2xl font-black text-indigo-700">{matchScore}% match</p>
+          <p className="mt-1 text-sm text-slate-600">
+            {totalRequired > 0
+              ? `${directDisplay.length} of ${totalRequired} required skills matched`
+              : "No required skills were listed for this job"}
+          </p>
+        </div>
+        <div className="mt-6 space-y-5">
+          {sections.map(({ title, skills, icon }) => (
+            <div key={title}>
+              <h3 className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-wide text-slate-600">
+                {icon}{title}
+              </h3>
+              {skills.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400">
+                  {title === "Missing required skills" ? "All listed required skills matched." : "None"}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
 
-/** Small pill listing one of the skills the AI read from the resume. */
+/** Small pill listing one of the skills detected in the resume. */
 function SkillChip({ children }) {
   return (
     <span className="px-2.5 py-1 bg-slate-50 border border-slate-100 text-slate-600 text-[11px] font-bold uppercase tracking-wider rounded-lg">
@@ -69,10 +176,12 @@ export default function ResumePage() {
   const [result, setResult] = useState(null);
   const [matches, setMatches] = useState([]);
   const [matchError, setMatchError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedMatch, setSelectedMatch] = useState(null);
 
   const isAuthenticated = useMemo(() => !!user?.uid, [user]);
 
-  /** Everything the AI extracted, normalized once for matching + display. */
+  /** Everything locally detected, normalized once for matching and display. */
   const resumeSkills = useMemo(
     () =>
       Array.from(
@@ -86,6 +195,16 @@ export default function ResumePage() {
     [result],
   );
 
+  const totalPages = Math.max(1, Math.ceil(matches.length / MATCHES_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const visibleMatches = matches.slice(
+    (safePage - 1) * MATCHES_PER_PAGE,
+    safePage * MATCHES_PER_PAGE,
+  );
+  const handlePageChange = (page) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
   const handleFileChange = (event) => {
     const nextFile = event.target.files?.[0] || null;
     setError("");
@@ -96,14 +215,14 @@ export default function ResumePage() {
       return;
     }
 
-    if (nextFile.size > 10 * 1024 * 1024) {
-      setError("File size must be 10MB or less.");
+    if (nextFile.size > 4 * 1024 * 1024) {
+      setError("File size must be 4 MiB or less.");
       setFile(null);
       return;
     }
 
-    if (!acceptedTypes.includes(nextFile.type)) {
-      setError("Please upload PDF, DOC, DOCX, or TXT format.");
+    if (!/\.(pdf|docx|txt)$/i.test(nextFile.name)) {
+      setError("Please upload a text-based PDF, DOCX, or TXT file.");
       setFile(null);
       return;
     }
@@ -127,9 +246,12 @@ export default function ResumePage() {
       const jobs = Array.isArray(response.data?.data) ? response.data.data : [];
       const ranked = rankJobsForResume(jobs, skills);
       setMatches(ranked);
+      setCurrentPage(1);
       return ranked;
     } catch {
       setMatches([]);
+      setCurrentPage(1);
+      setSelectedMatch(null);
       setMatchError("Could not load jobs to match against your resume.");
       return null;
     } finally {
@@ -155,6 +277,8 @@ export default function ResumePage() {
     setSuccess("");
     setMatches([]);
     setMatchError("");
+    setCurrentPage(1);
+    setSelectedMatch(null);
 
     try {
       const formData = new FormData();
@@ -164,8 +288,7 @@ export default function ResumePage() {
       // The shared axios instance defaults to JSON, which would serialize this
       // FormData and break multer on the server. Clear it for this one request
       // so the browser can send multipart/form-data with its own boundary.
-      // Timeout is raised for this call only: AI extraction of a full PDF can
-      // take ~70s, well past the global 30s default.
+      // Parsing larger documents can exceed the shared API client's timeout.
       const response = await api.post("/api/resume/upload", formData, {
         headers: { "Content-Type": undefined },
         timeout: 120000,
@@ -181,7 +304,7 @@ export default function ResumePage() {
 
       setUploading(false);
 
-      // Now find the jobs that match what the AI read from the resume.
+      // Match jobs against the skills detected in the resume.
       const ranked = await findMatches(data);
       setSuccess(
         ranked && ranked.length > 0
@@ -251,7 +374,7 @@ export default function ResumePage() {
                 Find jobs with your resume
               </h1>
               <p className="mt-1 text-sm text-slate-600">
-                Upload your resume — our AI extracts your skills and matches
+                Upload your resume — local parsing detects your skills and matches
                 them against every open job on JobMatch AI.
               </p>
             </div>
@@ -265,12 +388,12 @@ export default function ResumePage() {
 
           <div className="mt-6 space-y-4">
             <label className="block text-sm font-semibold text-slate-700">
-              Resume file (PDF / DOC / DOCX / TXT)
+              Resume file (PDF / DOCX / TXT)
             </label>
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.doc,.docx,.txt"
+              accept=".pdf,.docx,.txt"
               onChange={handleFileChange}
               className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:text-indigo-700"
             />
@@ -312,7 +435,7 @@ export default function ResumePage() {
           </div>
         </section>
 
-        {/* ── What the AI extracted ── */}
+        {/* ── What the local parser detected ── */}
         {result && (
           <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">
@@ -408,8 +531,8 @@ export default function ResumePage() {
             </div>
 
             <div className="space-y-4">
-              {matches.map(
-                ({ job, matchScore, directDisplay, adjacentDisplay }) => (
+              {visibleMatches.map(
+                ({ job, matchScore, directDisplay, adjacentDisplay, missingDisplay, totalRequired }) => (
                   <div
                     key={job._id}
                     className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:border-indigo-200 transition-all"
@@ -472,8 +595,26 @@ export default function ResumePage() {
                         </div>
                       </div>
 
-                      <div className="flex sm:flex-col items-center sm:items-end gap-3 shrink-0">
-                        <MatchBadge score={matchScore} />
+                      <div className="flex shrink-0 items-center gap-3 sm:flex-col sm:items-center">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedMatch({
+                            job,
+                            matchScore,
+                            directDisplay,
+                            adjacentDisplay,
+                            missingDisplay,
+                            totalRequired,
+                          })}
+                          aria-label={`Resume match ${matchScore} percent for ${job.title}. Open skill breakdown.`}
+                          title="Open resume match breakdown"
+                          className="flex min-w-[72px] flex-col items-center rounded-xl px-1.5 py-1 text-slate-600 transition hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        >
+                          <MatchScoreRing score={matchScore} />
+                          <span className="mt-1 text-[9px] font-semibold leading-tight text-slate-500 sm:text-[10px]">
+                            Resume Match
+                          </span>
+                        </button>
                         <button
                           type="button"
                           onClick={() => router.push(`/jobs/${job._id}`)}
@@ -496,6 +637,17 @@ export default function ResumePage() {
                 ),
               )}
             </div>
+            <Pagination
+              current={safePage}
+              total={totalPages}
+              onChange={handlePageChange}
+            />
+            {totalPages > 1 && (
+              <p className="text-center text-xs text-slate-400" aria-live="polite">
+                Showing {(safePage - 1) * MATCHES_PER_PAGE + 1}–
+                {Math.min(safePage * MATCHES_PER_PAGE, matches.length)} of {matches.length} matched jobs
+              </p>
+            )}
           </section>
         )}
 
@@ -540,6 +692,10 @@ export default function ResumePage() {
             </div>
           </section>
         )}
+        <ResumeMatchDetails
+          match={selectedMatch}
+          onClose={() => setSelectedMatch(null)}
+        />
         </div>
       </main>
       <Footer />

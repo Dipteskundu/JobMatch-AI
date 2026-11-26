@@ -133,7 +133,7 @@ Backend defaults to: `http://localhost:5001`
 Required env (see `JobMatch-AI-Server/.env.example`):
 - `MONGODB_URI`
 - `MONGO_DB_NAME`
-- (Optional) `GEMINI_API_KEY`
+- (Optional) `GEMINI_API_KEY` for other AI-assisted features; resume extraction uses local parsing and does not call an AI API.
 - (Optional) Firebase Admin (for protected routes + realtime notifications):
   - `FIREBASE_SERVICE_ACCOUNT_JSON` (recommended) or `FIREBASE_PROJECT_ID`/`FIREBASE_CLIENT_EMAIL`/`FIREBASE_PRIVATE_KEY`
   - `FIREBASE_DATABASE_URL` (optional)
@@ -188,9 +188,9 @@ This repo is designed to deploy **frontend** and **backend** as **two separate V
 
 ### 1) Deploy the backend
 1. Import the `JobMatch-AI-Server` Git repository as its own Vercel project. Its repository root is the project root; do not select a nested `JobMatch-AI-Server` directory.
-2. Set `MONGODB_URI` and a strong `JWT_SECRET` in Vercel. Add `MONGO_DB_NAME` if not using the default, and configure `GEMINI_API_KEY`, `FIREBASE_API_KEY`, and `FIREBASE_WEB_CLIENT_ID` when using those features.
+2. Set `MONGODB_URI` and a strong `JWT_SECRET` in Vercel. Add `MONGO_DB_NAME` if not using the default, and configure `GEMINI_API_KEY`, `FIREBASE_API_KEY`, and `FIREBASE_WEB_CLIENT_ID` only when using the features that need them. Resume extraction does not use any AI API.
 3. Keep the default Next.js/output settings unset for this backend. Its `vercel.json` routes requests to the Express handler at `/api/index`.
-4. Resume uploads currently accept files up to 10 MiB. Vercel's default request-body limit is 4.5 MB; preserving the full upload limit requires Fluid Compute, Performance (4 GB) function memory on Pro or Enterprise, and `VERCEL_SUPPORT_LARGE_REQUEST_BODY=1` in each relevant Vercel environment. Without that opt-in, uploads above 4.5 MB can fail before reaching the API. See [Vercel Function request body limits](https://vercel.com/docs/functions/limitations#request-body-size).
+4. Resume uploads support text-based PDF, DOCX, and TXT files up to 4 MiB. Scanned PDFs and legacy DOC files are not supported. The backend parses resume text locally without an AI API; test both resume features after deployment.
 
 ### 2) Deploy the frontend
 1. Import this `JobMatch-AI` Git repository as a separate Vercel project. Its repository root is the project root.

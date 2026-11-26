@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { push, authState } = vi.hoisted(() => ({
@@ -55,6 +55,14 @@ const unrelatedJob = {
   skills: ["Python"],
 };
 
+function matchingJobs(count, titlePrefix = "Resume Match") {
+  return Array.from({ length: count }, (_, index) => ({
+    ...matchingJob,
+    _id: `job-${titlePrefix.toLowerCase().replace(/\s/g, "-")}-${index + 1}`,
+    title: `${titlePrefix} ${String(index + 1).padStart(2, "0")}`,
+  }));
+}
+
 function chooseResume() {
   const input = document.querySelector('input[type="file"]');
   const file = new File(["%PDF-1.4 fake"], "resume.pdf", { type: "application/pdf" });
@@ -92,6 +100,28 @@ describe("ResumePage job matching", () => {
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
   });
 
+  it("rejects legacy DOC files", () => {
+    render(<ResumePage />);
+    const input = document.querySelector('input[type="file"]');
+    const file = new File(["legacy resume"], "resume.doc", { type: "application/msword" });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    expect(screen.getByText("Please upload a text-based PDF, DOCX, or TXT file.")).toBeInTheDocument();
+    expect(api.post).not.toHaveBeenCalled();
+  });
+
+  it("enforces the Vercel-safe 4 MiB upload cap", () => {
+    render(<ResumePage />);
+    const input = document.querySelector('input[type="file"]');
+    const file = new File(["x".repeat(4 * 1024 * 1024 + 1)], "resume.txt", { type: "text/plain" });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    expect(screen.getByText("File size must be 4 MiB or less.")).toBeInTheDocument();
+    expect(api.post).not.toHaveBeenCalled();
+  });
+
   it("shows ranked jobs that share skills with the resume", async () => {
     api.post.mockResolvedValue({ data: uploadPayload });
     api.get.mockResolvedValue({ data: { data: [matchingJob, unrelatedJob] } });
@@ -105,7 +135,86 @@ describe("ResumePage job matching", () => {
     expect(screen.getByText("60%")).toBeInTheDocument();
     expect(screen.getByText("Matched:")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "View Job" })).toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "Pagination" })).not.toBeInTheDocument();
     expect(api.get).toHaveBeenCalledWith("/api/jobs");
+  });
+
+  it("shows at most eight ranked jobs per page and navigates the remaining results", async () => {
+    api.post.mockResolvedValue({ data: uploadPayload });
+    api.get.mockResolvedValue({ data: { data: matchingJobs(14) } });
+
+    render(<ResumePage />);
+    await uploadAndFindJobs();
+
+    expect(await screen.findByText("14 jobs matched your resume")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Resume Match 01" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Resume Match 08" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Resume Match 09" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(8);
+    expect(screen.getByRole("button", { name: "Previous page" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Next page" })).toBeEnabled();
+
+    const pagination = screen.getByRole("navigation", { name: "Pagination" });
+    fireEvent.click(screen.getByRole("button", { name: "2" }));
+
+    expect(screen.getByRole("heading", { name: "Resume Match 09" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Resume Match 14" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Resume Match 08" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next page" })).toBeDisabled();
+    expect(pagination).toHaveAttribute("aria-label", "Pagination");
+    expect(screen.getByText(/Showing 9–14 of 14 matched jobs/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Previous page" }));
+    expect(screen.getByRole("heading", { name: "Resume Match 01" })).toBeInTheDocument();
+  });
+
+  it("opens a resume-based skill breakdown from the circular match score", async () => {
+    api.post.mockResolvedValue({ data: uploadPayload });
+    api.get.mockResolvedValue({ data: { data: [matchingJob] } });
+
+    render(<ResumePage />);
+    await uploadAndFindJobs();
+    fireEvent.click(await screen.findByRole("button", {
+      name: /Resume match 60 percent for React Developer/,
+    }));
+
+    expect(screen.getByRole("dialog", { name: "React Developer" })).toBeInTheDocument();
+    expect(screen.getByText("1 of 2 required skills matched")).toBeInTheDocument();
+    expect(screen.getByText("Direct matches")).toBeInTheDocument();
+    expect(screen.getByText("Adjacent skills")).toBeInTheDocument();
+    expect(screen.getByText("Missing required skills")).toBeInTheDocument();
+    expect(screen.getAllByText("Testing")).toHaveLength(2);
+    expect(api.get).toHaveBeenCalledTimes(1);
+    expect(api.get).toHaveBeenCalledWith("/api/jobs");
+
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "Close resume match breakdown",
+      }),
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("resets pagination to the first page when a new resume is analyzed", async () => {
+    api.post.mockResolvedValue({ data: uploadPayload });
+    api.get
+      .mockResolvedValueOnce({ data: { data: matchingJobs(10) } })
+      .mockResolvedValueOnce({ data: { data: matchingJobs(9, "Second Resume") } });
+
+    render(<ResumePage />);
+    await uploadAndFindJobs();
+    expect(await screen.findByText("10 jobs matched your resume")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "2" }));
+    expect(screen.getByRole("heading", { name: "Resume Match 10" })).toBeInTheDocument();
+
+    const input = document.querySelector('input[type="file"]');
+    const replacement = new File(["replacement"], "replacement.txt", { type: "text/plain" });
+    fireEvent.change(input, { target: { files: [replacement] } });
+
+    expect(await screen.findByText("9 jobs matched your resume")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Second Resume 01" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Second Resume 09" })).not.toBeInTheDocument();
+    expect(screen.getByText(/Showing 1–8 of 9 matched jobs/)).toBeInTheDocument();
   });
 
   it("shows the no-match empty state when no job shares a skill", async () => {
