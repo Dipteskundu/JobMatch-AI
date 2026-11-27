@@ -222,7 +222,7 @@ export default function ResumePage() {
     }
 
     if (!/\.(pdf|docx|txt)$/i.test(nextFile.name)) {
-      setError("Please upload a text-based PDF, DOCX, or TXT file.");
+      setError("Please upload a PDF, DOCX, or TXT file.");
       setFile(null);
       return;
     }
@@ -375,7 +375,8 @@ export default function ResumePage() {
               </h1>
               <p className="mt-1 text-sm text-slate-600">
                 Upload your resume — local parsing detects your skills and matches
-                them against every open job on JobMatch AI.
+                them against every open job on JobMatch AI. Scanned PDFs use
+                English OCR for up to two pages.
               </p>
             </div>
           </div>
@@ -388,7 +389,7 @@ export default function ResumePage() {
 
           <div className="mt-6 space-y-4">
             <label className="block text-sm font-semibold text-slate-700">
-              Resume file (PDF / DOCX / TXT)
+              Resume file (PDF / DOCX / TXT, up to 4 MiB)
             </label>
             <input
               ref={fileInputRef}

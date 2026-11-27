@@ -127,7 +127,7 @@ export default function EditProfilePage() {
 
     if (!/\.(pdf|docx|txt)$/i.test(file.name)) {
       setResumeFile(null);
-      setResumeError("Please upload a text-based PDF, DOCX, or TXT resume.");
+      setResumeError("Please upload a PDF, DOCX, or TXT resume.");
       event.target.value = "";
       return;
     }
@@ -301,7 +301,7 @@ export default function EditProfilePage() {
             <div className="min-w-0 flex-1">
               <h2 className="font-black text-slate-900">Fill your profile from a resume</h2>
               <p className="mt-1 text-sm text-slate-500">
-                Review locally detected details and choose what to add. Nothing is saved until you save your profile.
+                Review locally detected details and choose what to add. Scanned PDFs use English OCR for up to two pages. Nothing is saved until you save your profile.
               </p>
             </div>
           </div>
@@ -326,7 +326,7 @@ export default function EditProfilePage() {
               {importingResume ? "Analyzing..." : "Analyze resume"}
             </button>
           </div>
-          <p className="mt-2 text-xs text-slate-400">Text-based PDF, DOCX, or TXT · 4 MiB maximum · processed locally without AI APIs</p>
+          <p className="mt-2 text-xs text-slate-400">PDF, DOCX, or TXT · 4 MiB maximum · scanned PDF OCR is English-only and limited to two pages · processed locally without AI APIs</p>
           {resumeError && (
             <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
               {resumeError}

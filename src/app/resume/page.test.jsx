@@ -107,7 +107,7 @@ describe("ResumePage job matching", () => {
 
     fireEvent.change(input, { target: { files: [file] } });
 
-    expect(screen.getByText("Please upload a text-based PDF, DOCX, or TXT file.")).toBeInTheDocument();
+    expect(screen.getByText("Please upload a PDF, DOCX, or TXT file.")).toBeInTheDocument();
     expect(api.post).not.toHaveBeenCalled();
   });
 
@@ -136,6 +136,11 @@ describe("ResumePage job matching", () => {
     expect(screen.getByText("Matched:")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "View Job" })).toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Pagination" })).not.toBeInTheDocument();
+    expect(api.post).toHaveBeenCalledWith(
+      "/api/resume/upload",
+      expect.any(FormData),
+      expect.any(Object),
+    );
     expect(api.get).toHaveBeenCalledWith("/api/jobs");
   });
 
